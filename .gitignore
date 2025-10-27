@@ -1,0 +1,25 @@
+# venv / caches
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+
+# local data
+C:/Users/Viraj Jain/data/
+data/
+datasets/
+logs/
+runs/
+checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# outputs
+results/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
