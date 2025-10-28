@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class PGDAttack:
     """
     Projected Gradient Descent (Linf).
@@ -11,8 +12,15 @@ class PGDAttack:
         random_start: if True, start within epsilon-ball
         loss_fn: default BCEWithLogitsLoss (binary)
     """
-    def __init__(self, epsilon: float, alpha: float, num_steps: int,
-                 random_start: bool = True, loss_fn: nn.Module | None = None):
+
+    def __init__(
+        self,
+        epsilon: float,
+        alpha: float,
+        num_steps: int,
+        random_start: bool = True,
+        loss_fn: nn.Module | None = None,
+    ):
         self.epsilon = float(epsilon)
         self.alpha = float(alpha)
         self.num_steps = int(num_steps)
@@ -40,7 +48,9 @@ class PGDAttack:
                 grad_sign = x_adv.grad.sign()
                 x_adv = x_adv + self.alpha * grad_sign
                 # project to Linf-ball around x0
-                x_adv = torch.max(torch.min(x_adv, x0 + self.epsilon), x0 - self.epsilon)
+                x_adv = torch.max(
+                    torch.min(x_adv, x0 + self.epsilon), x0 - self.epsilon
+                )
                 x_adv.clamp_(0.0, 1.0)
             x_adv.grad = None
 

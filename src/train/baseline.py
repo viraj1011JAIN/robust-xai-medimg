@@ -1,14 +1,17 @@
 # src/train/baseline.py
-import os, time, math
+import math
+import os
+import time
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from omegaconf import OmegaConf
+from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import models as tv_models
 from torchvision.models import ResNet18_Weights
-from sklearn.metrics import roc_auc_score
-from omegaconf import OmegaConf
 
 try:
     import timm
@@ -43,11 +46,14 @@ def make_sampler(y, balance: bool):
     if not balance:
         return None
     import numpy as np
+
     y = np.asarray(y, dtype=np.float32)
-    p = max(y.mean(), 1e-6)   # positive rate
+    p = max(y.mean(), 1e-6)  # positive rate
     w_pos = 0.5 / p
     w_neg = 0.5 / (1.0 - p)
-    weights = torch.as_tensor([w_pos if t > 0.5 else w_neg for t in y], dtype=torch.float)
+    weights = torch.as_tensor(
+        [w_pos if t > 0.5 else w_neg for t in y], dtype=torch.float
+    )
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
@@ -84,10 +90,11 @@ def main(cfg_path="configs/base.yaml"):
 
     # -------- Datasets --------
     train_ds = CSVImageDataset(cfg.data.train_csv, cfg.data.img_size, augment=True)
-    val_ds   = CSVImageDataset(cfg.data.val_csv,   cfg.data.img_size, augment=False)
+    val_ds = CSVImageDataset(cfg.data.val_csv, cfg.data.img_size, augment=False)
 
     # -------- Loss with pos_weight (imbalance) --------
     import numpy as np
+
     p = max(float(np.mean(train_ds.y)), 1e-6)
     pos_weight = torch.tensor((1.0 - p) / p, dtype=torch.float, device=device)
     crit = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
@@ -123,13 +130,17 @@ def main(cfg_path="configs/base.yaml"):
         pretrained=bool(cfg.model.get("pretrained", True)),
     ).to(device)
 
-    opt = optim.AdamW(m.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay)
+    opt = optim.AdamW(
+        m.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay
+    )
     scaler = torch.amp.GradScaler("cuda", enabled=(use_cuda and cfg.train.amp))
 
     # -------- Scheduler --------
     sched = None
     if str(cfg.optim.scheduler).lower() == "plateau":
-        sched = optim.lr_scheduler.ReduceLROnPlateau(opt, mode="min", factor=0.5, patience=1)
+        sched = optim.lr_scheduler.ReduceLROnPlateau(
+            opt, mode="min", factor=0.5, patience=1
+        )
     elif str(cfg.optim.scheduler).lower() == "cosine":
         total_ep = int(cfg.train.epochs)
         warmup = max(int(cfg.train.warmup_epochs), 0)
@@ -156,7 +167,9 @@ def main(cfg_path="configs/base.yaml"):
             xb = xb.to(device, non_blocking=True)
             yb = yb.to(device, non_blocking=True).unsqueeze(1)
 
-            with torch.set_grad_enabled(train), torch.amp.autocast("cuda", enabled=(use_cuda and cfg.train.amp)):
+            with torch.set_grad_enabled(train), torch.amp.autocast(
+                "cuda", enabled=(use_cuda and cfg.train.amp)
+            ):
                 out = m(xb)
                 loss = crit(out, yb)
 
@@ -174,7 +187,7 @@ def main(cfg_path="configs/base.yaml"):
             y_all.append(yb.detach().cpu())
 
         logits = torch.cat(logits_all).squeeze(1)
-        ytrue  = torch.cat(y_all).squeeze(1)
+        ytrue = torch.cat(y_all).squeeze(1)
         try:
             auc = roc_auc_score(ytrue.numpy(), logits.sigmoid().numpy())
         except Exception:
@@ -198,7 +211,9 @@ def main(cfg_path="configs/base.yaml"):
         writer.add_scalar("val/loss", va_loss, ep)
         writer.add_scalar("val/auroc", va_auc, ep)
         writer.add_scalar("lr", opt.param_groups[0]["lr"], ep)
-        print(f"Epoch {ep}: train {tr_loss:.4f}/{tr_auc:.3f} | val {va_loss:.4f}/{va_auc:.3f} ({time.time()-t0:.1f}s)")
+        print(
+            f"Epoch {ep}: train {tr_loss:.4f}/{tr_auc:.3f} | val {va_loss:.4f}/{va_auc:.3f} ({time.time()-t0:.1f}s)"
+        )
 
         last_path = os.path.join(cfg.ckpt.dir, "last.pt")
         best_path = os.path.join(cfg.ckpt.dir, "best.pt")
