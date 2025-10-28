@@ -1,0 +1,22 @@
+﻿device: cuda
+data:
+  train_csv: "C:/Users/Viraj Jain/data/nih_cxr/train_debug.csv"  # 2k
+  val_csv:   "C:/Users/Viraj Jain/data/nih_cxr/val_debug.csv"    # 1k
+  batch_size: 8
+  img_size: 224
+train:
+  epochs: 15
+  num_workers: 0
+  amp: true
+  patience: 4
+  balance: true
+  warmup_epochs: 1
+  seed: 42
+optim:
+  lr: 1e-3
+  weight_decay: 1e-4
+  scheduler: cosine
+log:
+  outdir: "results/runs"
+ckpt:
+  dir: "results/checkpoints"
