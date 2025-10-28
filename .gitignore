@@ -23,6 +23,7 @@ results/
 # OS
 .DS_Store
 Thumbs.db
-results/**
+# --- keep evaluation artifacts under results/metrics ---
+!results/
 !results/metrics/
 !results/metrics/**
