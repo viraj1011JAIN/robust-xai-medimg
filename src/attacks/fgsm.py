@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class FGSMAttack:
     """
     One-step FGSM attack: x_adv = x + epsilon * sign(grad_x L)
@@ -8,6 +9,7 @@ class FGSMAttack:
         epsilon: max Linf perturbation (0..1 scale)
         loss_fn: default BCEWithLogitsLoss (binary)
     """
+
     def __init__(self, epsilon: float, loss_fn: nn.Module | None = None):
         self.epsilon = float(epsilon)
         self.loss_fn = loss_fn or nn.BCEWithLogitsLoss()

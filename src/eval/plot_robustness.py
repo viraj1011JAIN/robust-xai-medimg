@@ -1,6 +1,8 @@
 import argparse
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import pandas as pd
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -18,7 +20,9 @@ def main():
     else:
         raise ValueError("CSV does not contain expected columns.")
 
-    pivot = df.pivot_table(index=eps_col, columns=steps_col, values=y_col, aggfunc="mean").sort_index()
+    pivot = df.pivot_table(
+        index=eps_col, columns=steps_col, values=y_col, aggfunc="mean"
+    ).sort_index()
 
     plt.figure(figsize=(6, 4.5))
     for steps in pivot.columns:
@@ -31,6 +35,7 @@ def main():
     plt.tight_layout()
     plt.savefig(args.out, dpi=150)
     print(f"[saved] {args.out}")
+
 
 if __name__ == "__main__":
     main()

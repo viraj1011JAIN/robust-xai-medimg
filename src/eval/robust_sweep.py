@@ -1,17 +1,25 @@
-import argparse, os, csv, math
-import torch, torch.nn as nn
-from torch.utils.data import DataLoader
+import argparse
+import csv
+import math
+import os
+
+import torch
+import torch.nn as nn
 from sklearn.metrics import roc_auc_score
+from torch.utils.data import DataLoader
 from torchvision import models as tv_models
-from src.data.nih_binary import CSVImageDataset
+
 from src.attacks.fgsm import FGSMAttack
 from src.attacks.pgd import PGDAttack
+from src.data.nih_binary import CSVImageDataset
+
 
 def _safe_int(x):
     try:
         return int(x)
     except Exception:
         return int(float(x))
+
 
 def load_model(name: str, ckpt: str, device: torch.device) -> nn.Module:
     name = (name or "resnet18").lower()
@@ -27,6 +35,7 @@ def load_model(name: str, ckpt: str, device: torch.device) -> nn.Module:
     m.load_state_dict(sd, strict=True)
     return m.to(device).eval()
 
+
 @torch.no_grad()
 def auc_clean(model: nn.Module, loader, device):
     logits, labels = [], []
@@ -35,15 +44,21 @@ def auc_clean(model: nn.Module, loader, device):
         logits.append(model(xb).sigmoid().squeeze().cpu())
         labels.append(yb.cpu())
     import torch as T
+
     L, Y = T.cat(logits), T.cat(labels)
     try:
         return roc_auc_score(Y.numpy(), L.numpy())
     except Exception:
-        return float('nan')
+        return float("nan")
 
-def auc_under_attack(model: nn.Module, dataset, device, attack, attack_bs: int, eval_bs: int):
+
+def auc_under_attack(
+    model: nn.Module, dataset, device, attack, attack_bs: int, eval_bs: int
+):
     # 1) generate adversarials in micro-batches
-    atk_loader = DataLoader(dataset, batch_size=attack_bs, shuffle=False, num_workers=0, pin_memory=True)
+    atk_loader = DataLoader(
+        dataset, batch_size=attack_bs, shuffle=False, num_workers=0, pin_memory=True
+    )
     adv_x, adv_y = [], []
     for xb, yb in atk_loader:
         xb = xb.to(device, non_blocking=True)
@@ -54,20 +69,22 @@ def auc_under_attack(model: nn.Module, dataset, device, attack, attack_bs: int, 
         torch.cuda.empty_cache()
 
     import torch as T
+
     X = T.cat(adv_x).to(device, non_blocking=True)
     Y = T.cat(adv_y).to(device, non_blocking=True)
 
     # 2) evaluate logits in larger eval batches
     logits = []
     for i in range(0, X.size(0), eval_bs):
-        xb = X[i:i+eval_bs]
+        xb = X[i : i + eval_bs]
         logits.append(model(xb).sigmoid().squeeze().detach().cpu())
     L = T.cat(logits)
 
     try:
         return roc_auc_score(Y.cpu().numpy(), L.numpy())
     except Exception:
-        return float('nan')
+        return float("nan")
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -81,14 +98,18 @@ def main():
     ap.add_argument("--steps", default="0,5,10")
     ap.add_argument("--alpha", type=float, default=1.0, help="alpha in /255 units")
     ap.add_argument("--out", default="results/metrics/robust_sweep.csv")
-    ap.add_argument("--fresh", action="store_true", help="ignore any existing CSV and start fresh")
+    ap.add_argument(
+        "--fresh", action="store_true", help="ignore any existing CSV and start fresh"
+    )
     args = ap.parse_args()
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ds = CSVImageDataset(args.csv, img_size=args.img_size, augment=False)
-    eval_loader = DataLoader(ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=True)
+    eval_loader = DataLoader(
+        ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=True
+    )
 
     model = load_model(args.model, args.ckpt, device)
     clean = auc_clean(model, eval_loader, device)
@@ -124,13 +145,21 @@ def main():
                 print(f"[skip] already done -> {base}@eps{eps255}, steps={steps}")
                 continue
 
-            attack = FGSMAttack(epsilon=eps) if steps == 0 else PGDAttack(
-                epsilon=eps, alpha=(args.alpha / 255.0), num_steps=steps
+            attack = (
+                FGSMAttack(epsilon=eps)
+                if steps == 0
+                else PGDAttack(epsilon=eps, alpha=(args.alpha / 255.0), num_steps=steps)
             )
 
             try:
-                adv_auc = auc_under_attack(model, ds, device, attack, args.attack_bs, args.bs)
-                drop = (clean - adv_auc) if (not math.isnan(clean) and not math.isnan(adv_auc)) else float("nan")
+                adv_auc = auc_under_attack(
+                    model, ds, device, attack, args.attack_bs, args.bs
+                )
+                drop = (
+                    (clean - adv_auc)
+                    if (not math.isnan(clean) and not math.isnan(adv_auc))
+                    else float("nan")
+                )
                 row = {
                     "attack": f"{base}_{eps255}",
                     "eps_255": eps255,
@@ -140,19 +169,24 @@ def main():
                     "AUC_drop": drop,
                 }
                 # append progressively (resume-safe)
-                write_mode = "a" if (os.path.exists(args.out) and not args.fresh) else "w"
+                write_mode = (
+                    "a" if (os.path.exists(args.out) and not args.fresh) else "w"
+                )
                 with open(args.out, write_mode, newline="") as f:
                     w = csv.DictWriter(f, fieldnames=row.keys())
                     if write_mode == "w":
                         w.writeheader()
                     w.writerow(row)
-                print(f"{base:>8s}@{eps255:>2}/255: clean {clean:.3f} | adv {adv_auc:.3f} | drop {drop:.3f}")
+                print(
+                    f"{base:>8s}@{eps255:>2}/255: clean {clean:.3f} | adv {adv_auc:.3f} | drop {drop:.3f}"
+                )
 
             except RuntimeError as ex:
                 print(f"[warn] {base}@eps{eps255} failed: {ex}")
                 torch.cuda.empty_cache()
 
     print(f"[metrics] wrote/updated: {args.out}")
+
 
 if __name__ == "__main__":
     main()
