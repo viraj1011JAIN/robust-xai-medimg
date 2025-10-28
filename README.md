@@ -1,4 +1,4 @@
-# From repo root
+﻿# From repo root
 $md = @'
 ## Debug robustness sweeps (quick start)
 
@@ -14,3 +14,4 @@ powershell -ExecutionPolicy Bypass -File tools\run_debug_sweeps.ps1 -Force -Base
 # (Optional) point at a specific checkpoint explicitly
 powershell -ExecutionPolicy Bypass -File tools\run_debug_sweeps.ps1 -Ckpt results\checkpoints\triobj_best.pt
 rn
+
