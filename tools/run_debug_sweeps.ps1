@@ -1,36 +1,44 @@
 ﻿param(
-  [string]$Ckpt = ""
+  [string]$Ckpt = "",
+  [string]$BaseCsv = "results\metrics\robust_sweep_val_debug.csv",
+  [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
 $PY = ".\.venv\Scripts\python.exe"
 
-# --- pick a checkpoint (honor -Ckpt if valid, else auto-detect) ---
+# ckpt autodetect (as you already have)
+$ckptDir   = "results\checkpoints"
 if (-not $Ckpt -or -not (Test-Path $Ckpt)) {
-  $ckptDir   = "results\checkpoints"
-  $candidates = @("triobj_best.pt","best.pt","last.pt","best_weights.pt") |
-    ForEach-Object { Join-Path $ckptDir $_ }
-  $Ckpt = $null
+  $candidates = @("triobj_best.pt","best.pt","last.pt","best_weights.pt") | ForEach-Object { Join-Path $ckptDir $_ }
   foreach ($p in $candidates) { if (Test-Path $p) { $Ckpt = $p; break } }
 }
-if (-not $Ckpt -or -not (Test-Path $Ckpt)) {
-  Write-Error ("No checkpoint found. Tried: {0}" -f (("triobj_best.pt","best.pt","last.pt","best_weights.pt") -join ", "))
-  exit 1
-}
+if (-not $Ckpt -or -not (Test-Path $Ckpt)) { throw "No checkpoint found in $ckptDir." }
 Write-Host "[ckpt] using $Ckpt"
 
-# --- tri-objective sweep ---
-& $PY -m src.eval.robust_sweep `
-  --csv "C:\Users\Viraj Jain\data\nih_cxr\val_debug.csv" `
-  --ckpt $Ckpt `
-  --model resnet18 --bs 32 --attack_bs 8 `
-  --eps "0,2,4,6" --steps "0,5,10" --alpha 1 `
-  --out results\metrics\robust_sweep_val_debug_triobj.csv
+# paths
+$triCsv = "results\metrics\robust_sweep_val_debug_triobj.csv"
 
-# --- comparison plots (baseline vs tri-obj) ---
-& $PY -m src.eval.compare_robustness `
-  --base_csv results\metrics\robust_sweep_val_debug.csv `
-  --tri_csv  results\metrics\robust_sweep_val_debug_triobj.csv `
-  --outdir   results\metrics
+# tri-obj sweep (skip if exists unless -Force)
+if ($Force -or -not (Test-Path $triCsv)) {
+  & $PY -m src.eval.robust_sweep `
+    --csv "C:\Users\Viraj Jain\data\nih_cxr\val_debug.csv" `
+    --ckpt $Ckpt `
+    --model resnet18 --bs 32 --attack_bs 8 `
+    --eps "0,2,4,6" --steps "0,5,10" --alpha 1 `
+    --out $triCsv
+} else {
+  Write-Host "[skip] tri-obj sweep exists: $triCsv (use -Force to recompute)"
+}
+
+# comparison (only if baseline exists)
+if (-not (Test-Path $BaseCsv)) {
+  Write-Warning "Baseline CSV not found at $BaseCsv — skipping comparison."
+} else {
+  & $PY -m src.eval.compare_robustness `
+    --base_csv $BaseCsv `
+    --tri_csv  $triCsv `
+    --outdir   results\metrics
+}
 
 Write-Host "[done] Wrote tri-obj sweep + compare plots to results\metrics"
