@@ -1,49 +1,5 @@
-# venv / caches
-.venv/
-__pycache__/
-.ipynb_checkpoints/
-*.pyc
-
-# local data
-C:/Users/Viraj Jain/data/
-data/
-datasets/
-logs/
-runs/
-checkpoints/
-
-# IDE
-.vscode/
-.idea/
-
-# outputs
+﻿.venv/
+.venv310/
 results/
-*.log
-
-# OS
-.DS_Store
-Thumbs.db
-# --- keep evaluation artifacts under results/metrics ---
-!results/
-!results/metrics/
-!results/metrics/**
-# Keep only key outputs by default
-results/metrics/*
-!results/metrics/.gitkeep
-!results/metrics/robust_compare_delta_heatmap.png
-!results/metrics/robust_compare_pgd10.png
-!results/metrics/robust_compare_delta_table.md
-!results/metrics/robust_sweep_val_debug_triobj.csv
-!results/metrics/robust_sweep_val_debug_triobj_table.md
-# Keep results ignored, but track selected metrics artifacts
-/results/*
-!/results/metrics/
-!/results/metrics/*.csv
-!/results/metrics/robust_compare_*.png
-!/results/metrics/*table.md
-# Track ISIC + TCAV scaffolds even if configs/tools are ignored
-!/configs/isic_baseline.yaml
-!/tools/tcav_pipeline.py
-!/configs/cxr_baseline.yaml
-!/results/metrics/robust_sweep_val_triobj.csv
-!/tools/run_baseline.ps1
+runs/
+src/data/
