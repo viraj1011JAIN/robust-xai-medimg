@@ -1,45 +1,38 @@
 ﻿param(
-  [string]$Ckpt = "",
-  [string]$BaseCsv = "results\metrics\robust_sweep_val.csv",
-  [switch]$Force
+  [string]$Ckpt   = "results\checkpoints\best.pt",
+  [string]$ValCsv = "C:\Users\Viraj Jain\data\nih_cxr\val_debug.csv",  # ← set this
+  [string]$Out    = "results\metrics\robust_sweep_val.csv",
+  [string]$Model  = "resnet18",
+  [int]$ImgSize   = 224,
+  [string]$Eps    = "0,2,4,6",
+  [int]$Steps     = 10,
+  [int]$Bs        = 32,
+  [int]$AttackBs  = 16,
+  [switch]$Fresh
 )
 
 $ErrorActionPreference = "Stop"
-$PY = ".\.venv\Scripts\python.exe"
 
-# ckpt autodetect (as you already have)
-$ckptDir   = "results\checkpoints"
-if (-not $Ckpt -or -not (Test-Path $Ckpt)) {
-  $candidates = @("triobj_best.pt","best.pt","last.pt","best_weights.pt") | ForEach-Object { Join-Path $ckptDir $_ }
-  foreach ($p in $candidates) { if (Test-Path $p) { $Ckpt = $p; break } }
-}
-if (-not $Ckpt -or -not (Test-Path $Ckpt)) { throw "No checkpoint found in $ckptDir." }
-Write-Host "[ckpt] using $Ckpt"
+# Use python from the active venv
+$py = (Get-Command python).Source
+if (-not $py) { throw "Could not resolve 'python' in PATH. Activate .venv310 first." }
 
-# paths
-$triCsv = "results\metrics\robust_sweep_val_triobj.csv"
+if (-not (Test-Path $ValCsv)) { throw "VAL CSV not found: $ValCsv" }
+New-Item -ItemType Directory -Force -Path (Split-Path $Out) | Out-Null
 
-# tri-obj sweep (skip if exists unless -Force)
-if ($Force -or -not (Test-Path $triCsv)) {
-  & $PY -m src.eval.robust_sweep `
-    --csv "C:\Users\Viraj Jain\data\nih_cxr\val.csv" `
-    --ckpt $Ckpt `
-    --model resnet18 --bs 32 --attack_bs 8 `
-    --eps "0,2,4,6" --steps "0,5,10" --alpha 1 `
-    --out $triCsv
-} else {
-  Write-Host "[skip] tri-obj sweep exists: $triCsv (use -Force to recompute)"
-}
+# Build args
+$args = @(
+  "-m","src.eval.robust_sweep",
+  "--csv",$ValCsv,
+  "--ckpt",$Ckpt,
+  "--model",$Model,
+  "--bs",$Bs.ToString(),
+  "--attack_bs",$AttackBs.ToString(),
+  "--img_size",$ImgSize.ToString(),
+  "--eps",$Eps,
+  "--steps",$Steps.ToString(),
+  "--out",$Out
+)
+if ($Fresh) { $args += "--fresh" }
 
-# comparison (only if baseline exists)
-if (-not (Test-Path $BaseCsv)) {
-  Write-Warning "Baseline CSV not found at $BaseCsv — skipping comparison."
-} else {
-  & $PY -m src.eval.compare_robustness `
-    --base_csv $BaseCsv `
-    --tri_csv  $triCsv `
-    --outdir   results\metrics
-}
-
-Write-Host "[done] Wrote tri-obj sweep + compare plots to results\metrics"
-
+& $py @args

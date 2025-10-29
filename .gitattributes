@@ -1,13 +1,4 @@
-﻿*           text=auto
-
-# Markdown & CSV as LF (good for GitHub rendering)
-*.md        text eol=lf
-*.csv       text eol=lf
-
-# Code defaults
-*.py        text eol=lf
-*.ipynb     text eol=lf
-
-# Windows scripts can stay CRLF
-*.ps1       text eol=crlf
-*.bat       text eol=crlf
+*.py   text eol=lf
+*.md   text eol=lf
+*.csv  text eol=lf
+*.ps1  text eol=crlf

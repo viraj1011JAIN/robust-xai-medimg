@@ -1,5 +1,3 @@
-torch==2.9.0+cpu
-torchvision==0.24.0+cpu
 timm==1.0.21
 pandas==2.3.3
 numpy==1.26.4
