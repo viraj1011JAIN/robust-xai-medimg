@@ -62,3 +62,9 @@ powershell -ExecutionPolicy Bypass -File tools\run_debug_sweeps.ps1 -Ckpt result
 
 
 rn
+
+### Thesis figures (debug)
+
+- Delta heatmap: `docs/figures/xai_robust_debug_delta_heatmap.png`
+- PGD10 comparison: `docs/figures/xai_robust_debug_pgd10.png`
+
