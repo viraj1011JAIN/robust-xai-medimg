@@ -23,3 +23,5 @@
 *.pth       -text
 *.gz        -text
 *.zip       -text
+
+*.ini text eol=lf
