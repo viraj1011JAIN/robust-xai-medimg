@@ -1,0 +1,28 @@
+seed: 42
+device: cuda
+
+dataset:
+  name: nih_cxr
+  root: "C:/Users/Viraj Jain/data/nih_cxr"   # ← your folder
+  train_csv: "train_debug.csv"
+  val_csv: "val_debug.csv"
+  img_size: 224
+  augment: light
+
+model:
+  arch: resnet18
+  pretrained: true
+
+train:
+  epochs: 10
+  batch_size: 8
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  opt: adamw
+  mixed_precision: true
+  num_workers: 0
+
+log:
+  out_dir: results
+  ckpt_dir: results/checkpoints
+  metrics_dir: results/metrics

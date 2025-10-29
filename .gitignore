@@ -44,3 +44,6 @@ results/metrics/*
 # Track ISIC + TCAV scaffolds even if configs/tools are ignored
 !/configs/isic_baseline.yaml
 !/tools/tcav_pipeline.py
+!/configs/cxr_baseline.yaml
+!/results/metrics/robust_sweep_val_triobj.csv
+!/tools/run_baseline.ps1
