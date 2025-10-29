@@ -16,3 +16,9 @@ with ε ∈ {0, 2, 4, 6}/255. Figures \ref{fig:val-delta-heatmap} and
 minimal impact on clean AUROC.
 
 See Table: results/metrics/robust_compare_delta_table.md
+### RQ2 — Concept Robustness (ISIC + TCAV) — Scaffold
+
+- Config: `configs/isic_baseline.yaml`
+- Entry:  `tools/tcav_pipeline.py` (placeholder)
+- Concepts: Derm7pt (clinically meaningful), to train CAVs and compute TCAV.
+- Deliverables (planned): ΔTCAV under PGD, subgroup analysis, and stability plots.
