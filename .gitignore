@@ -41,3 +41,6 @@ results/metrics/*
 !/results/metrics/*.csv
 !/results/metrics/robust_compare_*.png
 !/results/metrics/*table.md
+# Track ISIC + TCAV scaffolds even if configs/tools are ignored
+!/configs/isic_baseline.yaml
+!/tools/tcav_pipeline.py
