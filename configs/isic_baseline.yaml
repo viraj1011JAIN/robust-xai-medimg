@@ -1,0 +1,13 @@
+﻿dataset:
+  name: isic_2020
+  root: "C:/Users/Viraj Jain/data/isic_2020"
+  train_csv: "train_debug.csv"
+  val_csv: "val_debug.csv"
+  img_size: 224
+model:
+  arch: resnet18
+  pretrained: true
+train:
+  epochs: 8
+  batch_size: 16
+  lr: 1e-3
