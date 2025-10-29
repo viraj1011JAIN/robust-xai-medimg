@@ -27,3 +27,11 @@ Thumbs.db
 !results/
 !results/metrics/
 !results/metrics/**
+# Keep only key outputs by default
+results/metrics/*
+!results/metrics/.gitkeep
+!results/metrics/robust_compare_delta_heatmap.png
+!results/metrics/robust_compare_pgd10.png
+!results/metrics/robust_compare_delta_table.md
+!results/metrics/robust_sweep_val_debug_triobj.csv
+!results/metrics/robust_sweep_val_debug_triobj_table.md
