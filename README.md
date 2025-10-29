@@ -68,3 +68,7 @@ rn
 - Delta heatmap: `docs/figures/xai_robust_debug_delta_heatmap.png`
 - PGD10 comparison: `docs/figures/xai_robust_debug_pgd10.png`
 
+
+## Results (VAL)
+See **docs/RESULTS_VAL.md** for robustness figures and table.
+
