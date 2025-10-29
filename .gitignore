@@ -35,3 +35,9 @@ results/metrics/*
 !results/metrics/robust_compare_delta_table.md
 !results/metrics/robust_sweep_val_debug_triobj.csv
 !results/metrics/robust_sweep_val_debug_triobj_table.md
+# Keep results ignored, but track selected metrics artifacts
+/results/*
+!/results/metrics/
+!/results/metrics/*.csv
+!/results/metrics/robust_compare_*.png
+!/results/metrics/*table.md
