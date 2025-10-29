@@ -32,9 +32,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ds = CSVImageDataset(args.csv, img_size=args.img_size, augment=False)
-    ld = DataLoader(
-        ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=True
-    )
+    ld = DataLoader(ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=True)
 
     m = build_model(args.model).to(device)
     # PyTorch 2.5 supports weights_only=True (experimental); keep False fallback for compatibility.

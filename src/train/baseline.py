@@ -36,8 +36,7 @@ def build_model(name: str, num_out: int = 1, pretrained: bool = True):
 
     if timm is None:
         raise ValueError(
-            f"Requested model '{name}' but timm is not installed. "
-            f"Either install timm or set model.name: resnet18."
+            f"Requested model '{name}' but timm is not installed. " f"Either install timm or set model.name: resnet18."
         )
     return timm.create_model(name, pretrained=pretrained, num_classes=num_out)
 
@@ -51,9 +50,7 @@ def make_sampler(y, balance: bool):
     p = max(y.mean(), 1e-6)  # positive rate
     w_pos = 0.5 / p
     w_neg = 0.5 / (1.0 - p)
-    weights = torch.as_tensor(
-        [w_pos if t > 0.5 else w_neg for t in y], dtype=torch.float
-    )
+    weights = torch.as_tensor([w_pos if t > 0.5 else w_neg for t in y], dtype=torch.float)
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
@@ -130,17 +127,13 @@ def main(cfg_path="configs/base.yaml"):
         pretrained=bool(cfg.model.get("pretrained", True)),
     ).to(device)
 
-    opt = optim.AdamW(
-        m.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay
-    )
+    opt = optim.AdamW(m.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay)
     scaler = torch.amp.GradScaler("cuda", enabled=(use_cuda and cfg.train.amp))
 
     # -------- Scheduler --------
     sched = None
     if str(cfg.optim.scheduler).lower() == "plateau":
-        sched = optim.lr_scheduler.ReduceLROnPlateau(
-            opt, mode="min", factor=0.5, patience=1
-        )
+        sched = optim.lr_scheduler.ReduceLROnPlateau(opt, mode="min", factor=0.5, patience=1)
     elif str(cfg.optim.scheduler).lower() == "cosine":
         total_ep = int(cfg.train.epochs)
         warmup = max(int(cfg.train.warmup_epochs), 0)
@@ -167,9 +160,7 @@ def main(cfg_path="configs/base.yaml"):
             xb = xb.to(device, non_blocking=True)
             yb = yb.to(device, non_blocking=True).unsqueeze(1)
 
-            with torch.set_grad_enabled(train), torch.amp.autocast(
-                "cuda", enabled=(use_cuda and cfg.train.amp)
-            ):
+            with torch.set_grad_enabled(train), torch.amp.autocast("cuda", enabled=(use_cuda and cfg.train.amp)):
                 out = m(xb)
                 loss = crit(out, yb)
 
@@ -211,9 +202,7 @@ def main(cfg_path="configs/base.yaml"):
         writer.add_scalar("val/loss", va_loss, ep)
         writer.add_scalar("val/auroc", va_auc, ep)
         writer.add_scalar("lr", opt.param_groups[0]["lr"], ep)
-        print(
-            f"Epoch {ep}: train {tr_loss:.4f}/{tr_auc:.3f} | val {va_loss:.4f}/{va_auc:.3f} ({time.time()-t0:.1f}s)"
-        )
+        print(f"Epoch {ep}: train {tr_loss:.4f}/{tr_auc:.3f} | val {va_loss:.4f}/{va_auc:.3f} ({time.time()-t0:.1f}s)")
 
         last_path = os.path.join(cfg.ckpt.dir, "last.pt")
         best_path = os.path.join(cfg.ckpt.dir, "best.pt")

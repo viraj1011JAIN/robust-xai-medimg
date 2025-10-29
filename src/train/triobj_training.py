@@ -43,9 +43,7 @@ class TriObjectiveLoss:
         self.task_loss_fn = nn.BCEWithLogitsLoss()
         self._step = 0
 
-    def _maybe_expl_loss(
-        self, x_clean: torch.Tensor, x_adv: Optional[torch.Tensor]
-    ) -> torch.Tensor:
+    def _maybe_expl_loss(self, x_clean: torch.Tensor, x_adv: Optional[torch.Tensor]) -> torch.Tensor:
         if self.gradcam is None or x_adv is None:
             return x_clean.new_zeros(())
 
@@ -107,8 +105,6 @@ class TriObjectiveLoss:
         loss_expl = self._maybe_expl_loss(x, x_adv)
         metrics["loss_expl"] = float(loss_expl.detach())
 
-        loss_total = (
-            loss_task + self.lambda_rob * loss_rob + self.lambda_expl * loss_expl
-        )
+        loss_total = loss_task + self.lambda_rob * loss_rob + self.lambda_expl * loss_expl
         metrics["loss_total"] = float(loss_total.detach())
         return loss_total, metrics

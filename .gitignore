@@ -1,5 +1,18 @@
-﻿.venv/
+﻿# Python
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual envs
+.venv/
 .venv310/
+
+# Experiments & artifacts
 results/
 runs/
 src/data/
+
+# Editors/OS
+.vscode/
+.DS_Store
+Thumbs.db

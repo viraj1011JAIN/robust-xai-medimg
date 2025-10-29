@@ -11,9 +11,7 @@ class GradCAM:
         self.model = model
         modules = dict(model.named_modules())
         if target_layer_name not in modules:
-            raise ValueError(
-                f"Layer {target_layer_name} not found. Available: {list(modules.keys())[:20]} ..."
-            )
+            raise ValueError(f"Layer {target_layer_name} not found. Available: {list(modules.keys())[:20]} ...")
         self.layer = modules[target_layer_name]
         self.activations = None
         self.gradients = None
@@ -43,9 +41,7 @@ class GradCAM:
         cam_min = cam.amin(dim=(1, 2), keepdim=True)
         cam_max = cam.amax(dim=(1, 2), keepdim=True)
         cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
-        cam = F.interpolate(
-            cam.unsqueeze(1), size=x.shape[2:], mode="bilinear", align_corners=False
-        ).squeeze(1)
+        cam = F.interpolate(cam.unsqueeze(1), size=x.shape[2:], mode="bilinear", align_corners=False).squeeze(1)
         return cam
 
     def remove_hooks(self):

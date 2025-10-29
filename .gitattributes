@@ -1,4 +1,25 @@
-*.py   text eol=lf
-*.md   text eol=lf
-*.csv  text eol=lf
-*.ps1  text eol=crlf
+﻿*           text=auto eol=lf
+
+# Common text
+*.py        text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+
+# Windows scripts that need CRLF
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+
+# Binary / no EOL normalization
+*.png       -text
+*.jpg       -text
+*.jpeg      -text
+*.gif       -text
+*.npz       -text
+*.pt        -text
+*.pth       -text
+*.gz        -text
+*.zip       -text
