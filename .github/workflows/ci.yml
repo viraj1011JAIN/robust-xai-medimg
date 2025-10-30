@@ -1,0 +1,31 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest  # you’re on Windows; change to ubuntu-latest if you prefer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip wheel
+          pip install -r requirements.txt
+
+      - name: Lint (pre-commit hooks)
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files -v
+
+      - name: Run fast tests
+        run: |
+          pytest -m "not slow" -q
