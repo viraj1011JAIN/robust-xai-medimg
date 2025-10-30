@@ -26,3 +26,8 @@ coverage.xml
 .coverage
 htmlcov/
 coverage.xml
+
+# Runs & checkpoints
+results/runs/
+results/checkpoints/*.pt
+

@@ -93,9 +93,11 @@ def main(cfg_path="configs/base.yaml"):
     sampler = make_sampler(train_ds.y, bool(cfg.train.balance))
 
     # --- dataloaders ---
+    # only pin on CUDA to avoid CPU warning
+    pin_mem = bool(use_cuda)
     common = dict(
         num_workers=int(cfg.train.num_workers),
-        pin_memory=True,
+        pin_memory=pin_mem,
         persistent_workers=False,
     )
     if common["num_workers"] > 0:
@@ -108,7 +110,12 @@ def main(cfg_path="configs/base.yaml"):
         sampler=sampler,
         **common,
     )
-    val_ld = DataLoader(val_ds, batch_size=cfg.data.batch_size * 2, shuffle=False, **common)
+    val_ld = DataLoader(
+        val_ds,
+        batch_size=cfg.data.batch_size * 2,
+        shuffle=False,
+        **common,
+    )
 
     # --- model / opt / loss / amp ---
     m = build_model(cfg.model.name, num_out=1).to(device)
@@ -228,7 +235,11 @@ def _smoke_run() -> None:
 def _parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--smoke", action="store_true", help="Run 1-batch synthetic training")
-    p.add_argument("--config", default="configs/base.yaml", help="Path to OmegaConf config")
+    p.add_argument("--config", type=str, default=None, help="Path to OmegaConf YAML")
+    # optional positional config, so both styles work:
+    #   python -m src.train.baseline --config configs/tiny.yaml
+    #   python -m src.train.baseline configs/tiny.yaml
+    p.add_argument("config_positional", nargs="?", default=None, help=argparse.SUPPRESS)
     return p.parse_args()
 
 
@@ -237,4 +248,5 @@ if __name__ == "__main__":  # pragma: no cover
     if args.smoke:
         _smoke_run()
     else:
-        main(args.config)
+        cfg_path = args.config or args.config_positional or "configs/base.yaml"
+        main(cfg_path)
