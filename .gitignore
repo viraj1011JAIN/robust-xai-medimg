@@ -31,3 +31,8 @@ coverage.xml
 results/runs/
 results/checkpoints/*.pt
 
+
+# Results & artifacts
+results/runs/
+results/checkpoints/*.pt
+
