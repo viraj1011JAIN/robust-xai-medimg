@@ -72,3 +72,6 @@ rn
 ## Results (VAL)
 See **docs/RESULTS_VAL.md** for robustness figures and table.
 
+
+![CI](https://github.com/viraj1011JAIN/robust-xai-medimg/actions/workflows/ci.yml/badge.svg)
+
