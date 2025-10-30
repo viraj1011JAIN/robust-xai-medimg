@@ -1,7 +1,9 @@
 ﻿from __future__ import annotations
 
 import argparse
+import csv
 import os
+from pathlib import Path
 from typing import Tuple
 
 import torch
@@ -34,7 +36,7 @@ def _build_loaders(cfg) -> Tuple[DataLoader, DataLoader]:
     return train_ld, val_ld
 
 
-def evaluate(cfg_path: str, ckpt: str | None = None, dry_run: bool = False) -> None:
+def evaluate(cfg_path: str, ckpt: str | None = None, dry_run: bool = False) -> tuple[float, float]:
     cfg = OmegaConf.load(cfg_path)
     cfg = OmegaConf.merge(
         {
@@ -63,7 +65,6 @@ def evaluate(cfg_path: str, ckpt: str | None = None, dry_run: bool = False) -> N
     logits_all, y_all, tot, n = [], [], 0.0, 0
 
     with torch.no_grad():
-        # NOTE: iterate directly without an unused index (fixes flake8 B007)
         for xb, yb in val_ld:
             xb = xb.to(device, non_blocking=True)
             yb = yb.to(device, non_blocking=True).unsqueeze(1)
@@ -87,7 +88,9 @@ def evaluate(cfg_path: str, ckpt: str | None = None, dry_run: bool = False) -> N
     except Exception:
         auc = float("nan")
 
-    print(f"[EVAL] loss={tot / max(1, n):.4f}  auroc={auc:.3f}  (batches={'1' if dry_run else 'all'})")
+    avg_loss = tot / max(1, n)
+    print(f"[EVAL] loss={avg_loss:.4f}  auroc={auc:.3f}  (batches={'1' if dry_run else 'all'})")
+    return avg_loss, float(auc)
 
 
 def _parse_args():
@@ -95,9 +98,20 @@ def _parse_args():
     p.add_argument("--config", required=True, help="Path to YAML config (e.g., configs/tiny.yaml)")
     p.add_argument("--ckpt", default=None, help="Path to weights (optional)")
     p.add_argument("--dry-run", action="store_true", help="Run one validation batch without requiring a checkpoint")
+    p.add_argument("--out", default=None, help="Write CSV summary to this path (loss,auroc)")
     return p.parse_args()
 
 
 if __name__ == "__main__":  # pragma: no cover
     args = _parse_args()
-    evaluate(args.config, ckpt=args.ckpt, dry_run=args.dry_run)
+    loss, auc = evaluate(args.config, ckpt=args.ckpt, dry_run=args.dry_run)
+    if args.out:
+        out_path = Path(args.out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not out_path.exists()
+        with out_path.open("a", newline="") as f:
+            w = csv.writer(f)
+            if write_header:
+                w.writerow(["loss", "auroc"])
+            w.writerow([f"{loss:.6f}", f"{auc:.6f}"])
+        print(f"[EVAL] wrote CSV -> {out_path}")
