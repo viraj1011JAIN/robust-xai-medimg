@@ -1,7 +1,9 @@
 ﻿Param(
   [string]$Config = "configs/tiny.yaml",
-  [string]$Out = "results/metrics/eval_tiny.csv",
+  [string]$Out    = "results/metrics/eval_tiny.csv",
   [switch]$DryRun = $true
 )
-$dry = $DryRun.IsPresent ? "--dry-run" : ""
-python -m src.train.evaluate --config $Config $dry --out $Out
+# Build argument list safely
+$ArgsList = @("-m","src.train.evaluate","--config",$Config,"--out",$Out)
+if ($DryRun.IsPresent) { $ArgsList += "--dry-run" }
+python @ArgsList

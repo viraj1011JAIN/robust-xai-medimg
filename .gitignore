@@ -8,7 +8,7 @@
 .venv310/
 
 # Experiments & artifacts
-results/
+
 runs/
 
 # Editors/OS
@@ -35,4 +35,7 @@ results/checkpoints/*.pt
 # Results & artifacts
 results/runs/
 results/checkpoints/*.pt
+
+
+!results/metrics/
 
