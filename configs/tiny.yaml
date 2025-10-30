@@ -1,0 +1,23 @@
+﻿device: cpu
+model:
+  name: resnet18
+data:
+  batch_size: 4
+  img_size: 64
+  train_csv: data/train.csv
+  val_csv:   data/val.csv
+train:
+  epochs: 1
+  num_workers: 0
+  amp: false
+  patience: 0
+  balance: false
+  seed: 42
+optim:
+  lr: 1e-3
+  weight_decay: 1e-4
+  scheduler: plateau
+log:
+  outdir: results/runs
+ckpt:
+  dir: results/checkpoints
