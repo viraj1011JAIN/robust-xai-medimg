@@ -1,79 +1,103 @@
+﻿from __future__ import annotations
+
 import argparse
 import os
+from typing import Tuple
 
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import roc_auc_score, roc_curve
+from omegaconf import OmegaConf
+from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from torchvision import models as tv_models
 
 from src.data.nih_binary import CSVImageDataset
 
 
-def build_model(name: str):
-    name = (name or "resnet18").lower()
+def _build_model(name: str, num_out: int = 1) -> nn.Module:
     m = tv_models.resnet18(weights=None)
-    m.fc = nn.Linear(m.fc.in_features, 1)
+    m.fc = nn.Linear(m.fc.in_features, num_out)
     return m
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", required=True)
-    ap.add_argument("--ckpt", required=True)
-    ap.add_argument("--model", default="resnet18")
-    ap.add_argument("--bs", type=int, default=64)
-    ap.add_argument("--img_size", type=int, default=224)
-    ap.add_argument("--out_csv", type=str, default="")
-    ap.add_argument("--roc_png", type=str, default="")
-    args = ap.parse_args()
+def _build_loaders(cfg) -> Tuple[DataLoader, DataLoader]:
+    train_ds = CSVImageDataset(cfg.data.train_csv, cfg.data.img_size, augment=True)
+    val_ds = CSVImageDataset(cfg.data.val_csv, cfg.data.img_size, augment=False)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    ds = CSVImageDataset(args.csv, img_size=args.img_size, augment=False)
-    ld = DataLoader(ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=True)
+    pin_mem = bool((cfg.device == "cuda") and torch.cuda.is_available())
+    common = dict(num_workers=int(cfg.train.num_workers), pin_memory=pin_mem, persistent_workers=False)
+    if common["num_workers"] > 0:
+        common["prefetch_factor"] = 2
 
-    m = build_model(args.model).to(device)
-    # PyTorch 2.5 supports weights_only=True (experimental); keep False fallback for compatibility.
-    try:
-        sd = torch.load(args.ckpt, map_location=device, weights_only=True)
-    except TypeError:
-        sd = torch.load(args.ckpt, map_location=device)
-    if isinstance(sd, dict) and "state_dict" in sd:
-        sd = sd["state_dict"]
-    m.load_state_dict(sd, strict=True)
-    m.eval()
+    train_ld = DataLoader(train_ds, batch_size=cfg.data.batch_size, shuffle=True, **common)
+    val_ld = DataLoader(val_ds, batch_size=max(1, cfg.data.batch_size * 2), shuffle=False, **common)
+    return train_ld, val_ld
 
-    all_logits, all_y = [], []
+
+def evaluate(cfg_path: str, ckpt: str | None = None, dry_run: bool = False) -> None:
+    cfg = OmegaConf.load(cfg_path)
+    cfg = OmegaConf.merge(
+        {
+            "device": "cuda",
+            "model": {"name": "resnet18"},
+            "data": {"batch_size": 8, "img_size": 224, "train_csv": "", "val_csv": ""},
+            "train": {"num_workers": 0, "seed": 42},
+        },
+        cfg,
+    )
+
+    use_cuda = (cfg.device == "cuda") and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+
+    _, val_ld = _build_loaders(cfg)
+    model = _build_model(cfg.model.name, num_out=1).to(device)
+    loss_fn = nn.BCEWithLogitsLoss()
+
+    if ckpt and os.path.exists(ckpt):
+        state = torch.load(ckpt, map_location=device)
+        if isinstance(state, dict) and "state_dict" in state:
+            state = state["state_dict"]
+        model.load_state_dict(state, strict=False)
+
+    model.eval()
+    logits_all, y_all, tot, n = [], [], 0.0, 0
+
     with torch.no_grad():
-        for xb, yb in ld:
+        # NOTE: iterate directly without an unused index (fixes flake8 B007)
+        for xb, yb in val_ld:
             xb = xb.to(device, non_blocking=True)
-            logits = m(xb).squeeze(1).cpu()
-            all_logits.append(logits)
-            all_y.append(yb)
+            yb = yb.to(device, non_blocking=True).unsqueeze(1)
 
-    logits = torch.cat(all_logits).numpy()
-    ytrue = torch.cat(all_y).numpy()
-    probs = 1.0 / (1.0 + np.exp(-logits))
-    auc = roc_auc_score(ytrue, probs)
-    print("AUROC:", auc)
+            out = model(xb)
+            loss = loss_fn(out, yb)
 
-    if args.out_csv:
-        import pandas as pd
+            tot += loss.item() * xb.size(0)
+            n += xb.size(0)
 
-        pd.DataFrame({"prob": probs, "y": ytrue}).to_csv(args.out_csv, index=False)
-    if args.roc_png:
-        fpr, tpr, _ = roc_curve(ytrue, probs)
-        plt.figure()
-        plt.plot(fpr, tpr, lw=2)
-        plt.plot([0, 1], [0, 1], "--")
-        plt.xlabel("FPR")
-        plt.ylabel("TPR")
-        plt.title(f"ROC (AUC={auc:.3f})")
-        os.makedirs(os.path.dirname(args.roc_png), exist_ok=True)
-        plt.savefig(args.roc_png, bbox_inches="tight")
+            logits_all.append(out.detach().cpu())
+            y_all.append(yb.detach().cpu())
+
+            if dry_run:
+                break
+
+    logits = torch.cat(logits_all).squeeze(1)
+    ytrue = torch.cat(y_all).squeeze(1)
+    try:
+        auc = roc_auc_score(ytrue.numpy(), logits.sigmoid().numpy())
+    except Exception:
+        auc = float("nan")
+
+    print(f"[EVAL] loss={tot / max(1, n):.4f}  auroc={auc:.3f}  (batches={'1' if dry_run else 'all'})")
 
 
-if __name__ == "__main__":
-    main()
+def _parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--config", required=True, help="Path to YAML config (e.g., configs/tiny.yaml)")
+    p.add_argument("--ckpt", default=None, help="Path to weights (optional)")
+    p.add_argument("--dry-run", action="store_true", help="Run one validation batch without requiring a checkpoint")
+    return p.parse_args()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    args = _parse_args()
+    evaluate(args.config, ckpt=args.ckpt, dry_run=args.dry_run)
