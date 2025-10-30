@@ -15,3 +15,14 @@ runs/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
