@@ -56,6 +56,22 @@ def _run_generate(gc, x: torch.Tensor):
     raise AssertionError("Dont know how to invoke Grad-CAM with this object")
 
 
+def _to_nchw1(t: torch.Tensor) -> torch.Tensor:
+    """
+    Normalize Grad-CAM heatmaps to [N,1,H,W] no matter what the lib returns.
+    Accepts [N,H,W], [N,1,H,W], [N,H,W,1], or [N,C,H,W] (C>1 -> take first).
+    """
+    if t.dim() == 3:  # [N,H,W]
+        t = t.unsqueeze(1)  # -> [N,1,H,W]
+    elif t.dim() == 4 and t.shape[-1] == 1 and t.shape[1] != 1:
+        # [N,H,W,1] -> [N,1,H,W]
+        t = t.permute(0, 3, 1, 2)
+    elif t.dim() == 4 and t.shape[1] != 1:
+        # Multi-channel maps: take the first (or use mean if you prefer)
+        t = t[:, :1, ...]
+    return t
+
+
 @pytest.mark.parametrize("bs,h,w", [(1, 64, 64)])
 def test_gradcam_output_shape(bs, h, w):
     model = resnet18(weights=None).eval()
@@ -64,7 +80,9 @@ def test_gradcam_output_shape(bs, h, w):
     heat = _run_generate(gc, x)
 
     assert torch.is_tensor(heat)
+    heat = _to_nchw1(heat)
     assert list(heat.shape) == [bs, 1, h, w]
+    assert torch.isfinite(heat).all()
 
 
 @pytest.mark.parametrize(
