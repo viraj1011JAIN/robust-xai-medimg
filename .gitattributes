@@ -41,3 +41,4 @@ eol=lf
 *.gif binary
 
 *.md text eol=lf
+*.html text eol=lf
