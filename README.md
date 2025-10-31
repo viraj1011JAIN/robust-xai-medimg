@@ -24,11 +24,22 @@ python -m src.train.baseline --config configs/tiny.yaml
 python -m src.train.baseline configs/tiny.yaml
 # or just the synthetic smoke path again:
 python -m src.train.baseline --smoke
-rn
 
-## Robustness reports
-- [64×64](results/metrics/64/index.md)
-- [224×224](results/metrics/224/index.md)
 
-- [Single-file HTML robustness report](results/metrics/robust_report.html)
+---
+
+# 2) Run the debug robustness sweeps
+
+> These commands assume you’re still in the repo root and that `tools\run_debug_sweeps.ps1` exists.
+
+```powershell
+# Allow scripts for this PowerShell process only (safe/temporary)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+# (Optional) activate your Python/conda venv if your script uses it
+# .\.venv\Scripts\Activate.ps1
+# or: conda activate robust-xai
+
+# Quick start: uses the newest checkpoint it finds in results\checkpoints
+powershell -ExecutionPolicy Bypass -File tools\run_debug_sweeps.ps1
 

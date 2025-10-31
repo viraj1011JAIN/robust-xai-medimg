@@ -1,0 +1,20 @@
+﻿root: data/concepts/derm7pt
+concepts:
+  - name: pigment_network
+    pos: pigment_network/pos
+    neg: pigment_network/neg
+  - name: streaks
+    pos: streaks/pos
+    neg: streaks/neg
+  - name: regression_structures
+    pos: regression_structures/pos
+    neg: regression_structures/neg
+  - name: dots_globules
+    pos: dots_globules/pos
+    neg: dots_globules/neg
+  - name: negative_network
+    pos: negative_network/pos
+    neg: negative_network/neg
+  - name: artifacts_neg
+    pos: artifacts_neg/pos
+    neg: artifacts_neg/neg
