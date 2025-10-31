@@ -1,0 +1,17 @@
+﻿name: robust-xai-medimg-cpu
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - pip
+  - pip:
+      - torch==2.9.0+cpu
+      - torchvision==0.24.0
+      - timm==0.9.12
+      - albumentations==1.3.1
+      - qudida==0.0.4
+      - opencv-python-headless==4.10.0.84
+      - torchmetrics==1.5.1
+      - scikit-learn==1.7.2
+      - pandas==2.3.3
+      - PyYAML==6.0.3
