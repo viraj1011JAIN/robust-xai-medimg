@@ -39,3 +39,17 @@ results/checkpoints/*.pt
 
 !results/metrics/
 
+
+# local envs
+.venv/
+venv/
+
+
+# misc caches
+**/.ipynb_checkpoints/
+
+
+# local envs
+.venv/
+venv/
+
