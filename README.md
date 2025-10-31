@@ -29,3 +29,6 @@ rn
 ## Robustness reports
 - [64×64](results/metrics/64/index.md)
 - [224×224](results/metrics/224/index.md)
+
+- [Single-file HTML robustness report](results/metrics/robust_report.html)
+
