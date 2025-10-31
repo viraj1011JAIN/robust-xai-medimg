@@ -25,3 +25,7 @@ python -m src.train.baseline configs/tiny.yaml
 # or just the synthetic smoke path again:
 python -m src.train.baseline --smoke
 rn
+
+## Robustness reports
+- [64×64](results/metrics/64/index.md)
+- [224×224](results/metrics/224/index.md)
