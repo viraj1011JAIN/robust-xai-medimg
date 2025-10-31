@@ -33,3 +33,10 @@ eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.py text eol=lf
+
+# Treat images as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
