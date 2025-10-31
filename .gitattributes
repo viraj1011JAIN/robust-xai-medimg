@@ -40,3 +40,4 @@ eol=lf
 *.jpeg binary
 *.gif binary
 
+*.md text eol=lf
