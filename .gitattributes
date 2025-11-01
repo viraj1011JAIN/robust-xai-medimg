@@ -1,10 +1,12 @@
-# Default to LF for text
+# Default: normalize text and check out with LF
 * text=auto eol=lf
 
-# PowerShell scripts want CRLF
+# PowerShell scripts want CRLF on checkout
 *.ps1 text eol=crlf
 
-# Always keep these LF
-*.py  text eol=lf
-*.txt text eol=lf
-*.md  text eol=lf
+# Always LF
+*.py   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
