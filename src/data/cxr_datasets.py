@@ -9,13 +9,17 @@ from torch.utils.data import Dataset
 
 
 class _CXRBase(Dataset):
-    def __init__(self, csv_path, images_root, target_cols, transform=None, dtype=np.float32):
+    def __init__(
+        self, csv_path, images_root, target_cols, transform=None, dtype=np.float32
+    ):
         self.df = pd.read_csv(csv_path)
         self.images_root = images_root
         self.target_cols = list(target_cols)
         self.transform = transform
         self.dtype = dtype
-        self.df[self.target_cols] = self.df[self.target_cols].fillna(0).astype(self.dtype)
+        self.df[self.target_cols] = (
+            self.df[self.target_cols].fillna(0).astype(self.dtype)
+        )
 
     def __len__(self):
         return len(self.df)
@@ -52,7 +56,9 @@ class NIHChestXray(_CXRBase):
     ]
 
     def __init__(self, csv_path, images_root, transform=None, target_cols=None):
-        super().__init__(csv_path, images_root, target_cols or self.DEFAULT_TARGETS, transform)
+        super().__init__(
+            csv_path, images_root, target_cols or self.DEFAULT_TARGETS, transform
+        )
 
 
 class PadChest(_CXRBase):

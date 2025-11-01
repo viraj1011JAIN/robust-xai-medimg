@@ -71,7 +71,8 @@ class TriObjectiveLoss:
         do_expl = (
             self.gradcam is not None
             and self._step % max(self.expl_freq, 1) == 0
-            and torch.rand(1, device=x.device).item() < max(min(self.expl_subsample, 1.0), 0.0)
+            and torch.rand(1, device=x.device).item()
+            < max(min(self.expl_subsample, 1.0), 0.0)
             and x_adv is not None
         )
         if do_expl:
@@ -88,6 +89,8 @@ class TriObjectiveLoss:
             metrics["ssim"] = float(ssim_val.detach())
         metrics["loss_expl"] = float(loss_expl.detach())
 
-        loss_total = loss_task + self.lambda_rob * loss_rob + self.lambda_expl * loss_expl
+        loss_total = (
+            loss_task + self.lambda_rob * loss_rob + self.lambda_expl * loss_expl
+        )
         metrics["loss_total"] = float(loss_total.detach())
         return loss_total, metrics

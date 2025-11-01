@@ -22,7 +22,9 @@ def _load_sweep(p: str) -> pd.DataFrame:
 
     needed = {"eps_255", "steps", "AUC_adv"}
     if not needed.issubset(df.columns):
-        raise ValueError(f"{p} is missing required columns {needed}, has {list(df.columns)}")
+        raise ValueError(
+            f"{p} is missing required columns {needed}, has {list(df.columns)}"
+        )
 
     out = df[["eps_255", "steps", "AUC_adv"]].copy()
     out = out.groupby(["eps_255", "steps"], as_index=False)["AUC_adv"].mean()
@@ -66,7 +68,9 @@ def plot_delta_heatmap(both: pd.DataFrame, out_png: str) -> None:
     _save(out_png)
 
 
-def _plot_line_for_steps(both: pd.DataFrame, steps_val: int, title: str, out_png: str) -> None:
+def _plot_line_for_steps(
+    both: pd.DataFrame, steps_val: int, title: str, out_png: str
+) -> None:
     s = both[both["steps"] == steps_val].sort_values("eps_255")
     if s.empty:
         print(f"[warn] no rows for steps={steps_val}; skip {out_png}")
@@ -104,7 +108,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base_csv", required=True, help="baseline sweep CSV")
     ap.add_argument("--tri_csv", required=True, help="tri-objective sweep CSV")
-    ap.add_argument("--outdir", default="results/metrics", help="directory for figures/tables")
+    ap.add_argument(
+        "--outdir", default="results/metrics", help="directory for figures/tables"
+    )
     args = ap.parse_args()
 
     base = _load_sweep(args.base_csv)
@@ -114,18 +120,40 @@ def main() -> None:
     os.makedirs(args.outdir, exist_ok=True)
 
     # 1) Heatmap of Î”
-    plot_delta_heatmap(merged, os.path.join(args.outdir, "robust_compare_delta_heatmap.png"))
+    plot_delta_heatmap(
+        merged, os.path.join(args.outdir, "robust_compare_delta_heatmap.png")
+    )
 
     # 2) Line plots at specific steps
     _plot_line_for_steps(
-        merged, 0, "FGSM (steps=0): AUC_adv vs Îµ", os.path.join(args.outdir, "robust_compare_fgsm.png")
+        merged,
+        0,
+        "FGSM (steps=0): AUC_adv vs Îµ",
+        os.path.join(args.outdir, "robust_compare_fgsm.png"),
     )
-    _plot_line_for_steps(merged, 5, "PGD-5: AUC_adv vs Îµ", os.path.join(args.outdir, "robust_compare_pgd5.png"))
-    _plot_line_for_steps(merged, 10, "PGD-10: AUC_adv vs Îµ", os.path.join(args.outdir, "robust_compare_pgd10.png"))
-    _plot_line_for_steps(merged, 20, "PGD-20: AUC_adv vs Îµ", os.path.join(args.outdir, "robust_compare_pgd20.png"))
+    _plot_line_for_steps(
+        merged,
+        5,
+        "PGD-5: AUC_adv vs Îµ",
+        os.path.join(args.outdir, "robust_compare_pgd5.png"),
+    )
+    _plot_line_for_steps(
+        merged,
+        10,
+        "PGD-10: AUC_adv vs Îµ",
+        os.path.join(args.outdir, "robust_compare_pgd10.png"),
+    )
+    _plot_line_for_steps(
+        merged,
+        20,
+        "PGD-20: AUC_adv vs Îµ",
+        os.path.join(args.outdir, "robust_compare_pgd20.png"),
+    )
 
     # 3) Markdown delta table
-    write_delta_table(merged, os.path.join(args.outdir, "robust_compare_delta_table.md"))
+    write_delta_table(
+        merged, os.path.join(args.outdir, "robust_compare_delta_table.md")
+    )
 
     print(f"[done] Wrote plots and table to: {args.outdir}")
 

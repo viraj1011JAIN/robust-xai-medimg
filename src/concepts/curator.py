@@ -10,7 +10,9 @@ POS, NEG = "pos", "neg"
 
 
 class ConceptCurator:
-    def __init__(self, dataset_csv: str, images_root: str, out_root: str, seed: int = 42):
+    def __init__(
+        self, dataset_csv: str, images_root: str, out_root: str, seed: int = 42
+    ):
         self.df = pd.read_csv(dataset_csv)
         self.images_root = images_root
         self.out_root = out_root
@@ -26,7 +28,14 @@ class ConceptCurator:
             if os.path.isfile(src):
                 shutil.copy2(src, dst)
 
-    def curate_clinical_concept(self, concept: str, pos_query: str, neg_query: str, n_pos: int = 80, n_neg: int = 80):
+    def curate_clinical_concept(
+        self,
+        concept: str,
+        pos_query: str,
+        neg_query: str,
+        n_pos: int = 80,
+        n_neg: int = 80,
+    ):
         pos_df = self.df.query(pos_query)
         neg_df = self.df.query(neg_query)
         pos_df = pos_df.sample(n=min(n_pos, len(pos_df)), random_state=0)

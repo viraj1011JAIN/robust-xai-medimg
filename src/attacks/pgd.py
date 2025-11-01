@@ -48,7 +48,9 @@ class PGDAttack:
                 grad_sign = x_adv.grad.sign()
                 x_adv = x_adv + self.alpha * grad_sign
                 # project to Linf-ball around x0
-                x_adv = torch.max(torch.min(x_adv, x0 + self.epsilon), x0 - self.epsilon)
+                x_adv = torch.max(
+                    torch.min(x_adv, x0 + self.epsilon), x0 - self.epsilon
+                )
                 x_adv.clamp_(0.0, 1.0)
             x_adv.grad = None
 

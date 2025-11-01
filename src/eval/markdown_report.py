@@ -22,13 +22,27 @@ def _load(path: str, tag: str) -> pd.DataFrame:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Merge two robustness CSVs and write a markdown comparison.")
-    ap.add_argument("--base", required=True, help="CSV from model A (e.g., best.pt sweep)")
-    ap.add_argument("--tri", required=True, help="CSV from model B (e.g., last.pt sweep)")
+    ap = argparse.ArgumentParser(
+        description="Merge two robustness CSVs and write a markdown comparison."
+    )
+    ap.add_argument(
+        "--base", required=True, help="CSV from model A (e.g., best.pt sweep)"
+    )
+    ap.add_argument(
+        "--tri", required=True, help="CSV from model B (e.g., last.pt sweep)"
+    )
     ap.add_argument("--out", required=True, help="Output markdown path")
     ap.add_argument("--title", default="Robustness compare", help="Markdown title")
-    ap.add_argument("--ascii", action="store_true", help="Use ASCII column names (no Δ)")
-    ap.add_argument("--round", dest="round_ndigits", type=int, default=3, help="Round numeric columns to N digits")
+    ap.add_argument(
+        "--ascii", action="store_true", help="Use ASCII column names (no Δ)"
+    )
+    ap.add_argument(
+        "--round",
+        dest="round_ndigits",
+        type=int,
+        default=3,
+        help="Round numeric columns to N digits",
+    )
     args = ap.parse_args()
 
     base = _load(args.base, "base")
@@ -53,7 +67,15 @@ def main():
     m = m.sort_values(["eps_255", "steps", "attack"]).reset_index(drop=True)
 
     # Select & round for the table
-    cols = ["attack", "eps_255", "steps", "AUC_adv_base", "AUC_adv_tri", d_adv_col, d_drop_col]
+    cols = [
+        "attack",
+        "eps_255",
+        "steps",
+        "AUC_adv_base",
+        "AUC_adv_tri",
+        d_adv_col,
+        d_drop_col,
+    ]
     out_df = m[cols].copy()
     out_df = out_df.round(args.round_ndigits)
 

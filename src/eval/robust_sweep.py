@@ -45,7 +45,9 @@ def _state_signature(state_dict: dict) -> str:
         shape = tuple(v.shape) if hasattr(v, "shape") else None
         dtype = str(v.dtype) if hasattr(v, "dtype") else None
         items.append((k, shape, dtype))
-    s = json.dumps(sorted(items, key=lambda t: t[0]), separators=(",", ":"), ensure_ascii=False)
+    s = json.dumps(
+        sorted(items, key=lambda t: t[0]), separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:12]
 
 
@@ -55,7 +57,9 @@ def _assert_ckpt_ok(path: str, min_bytes: int = 4096):
         raise RuntimeError(f"Checkpoint not found: {path}")
     sz = os.path.getsize(path)
     if sz < min_bytes:
-        raise RuntimeError(f"Checkpoint looks truncated (size={sz} bytes < {min_bytes}): {path}")
+        raise RuntimeError(
+            f"Checkpoint looks truncated (size={sz} bytes < {min_bytes}): {path}"
+        )
 
 
 def load_model(name: str, ckpt: str, device: torch.device) -> nn.Module:
@@ -78,30 +82,42 @@ def load_model(name: str, ckpt: str, device: torch.device) -> nn.Module:
     except Exception as e:
         msg = str(e)
         if "PytorchStreamReader" in msg or "central directory" in msg:
-            raise RuntimeError(f"Checkpoint appears corrupt or not a valid PyTorch archive: {ckpt}\n{e}")
+            raise RuntimeError(
+                f"Checkpoint appears corrupt or not a valid PyTorch archive: {ckpt}\n{e}"
+            )
         raise RuntimeError(f"Failed to load checkpoint file (torch.load): {ckpt}\n{e}")
 
     # Unwrap common formats
-    if isinstance(raw, dict) and "state_dict" in raw and isinstance(raw["state_dict"], dict):
+    if (
+        isinstance(raw, dict)
+        and "state_dict" in raw
+        and isinstance(raw["state_dict"], dict)
+    ):
         sd = raw["state_dict"]
     elif isinstance(raw, dict):
         # Heuristic: treat the dict as a state_dict if it looks like one (Tensor leaves)
         sd = raw
     else:
-        raise RuntimeError(f"Unexpected checkpoint format. Expected dict or dict['state_dict'], got: {type(raw)}")
+        raise RuntimeError(
+            f"Unexpected checkpoint format. Expected dict or dict['state_dict'], got: {type(raw)}"
+        )
 
     # Load weights (strict True so corrupt/truncated mismatches fail loudly)
     try:
         missing, unexpected = m.load_state_dict(sd, strict=True)
         if missing or unexpected:
-            raise RuntimeError(f"Missing keys: {missing}, Unexpected keys: {unexpected}")
+            raise RuntimeError(
+                f"Missing keys: {missing}, Unexpected keys: {unexpected}"
+            )
     except Exception as e:
         raise RuntimeError(f"Model.load_state_dict failed for {ckpt}: {e}")
 
     # Report fingerprinting info
     file_sha = _file_sha256(ckpt)[:12]
     sig = _state_signature(sd)
-    print(f"[ckpt] path={ckpt} | file_sha256={file_sha} | tensors={len(sd)} | sig={sig}")
+    print(
+        f"[ckpt] path={ckpt} | file_sha256={file_sha} | tensors={len(sd)} | sig={sig}"
+    )
 
     return m.to(device).eval()
 
@@ -122,11 +138,15 @@ def auc_clean(model: nn.Module, loader, device):
         return float("nan")
 
 
-def auc_under_attack(model: nn.Module, dataset, device, attack, attack_bs: int, eval_bs: int):
+def auc_under_attack(
+    model: nn.Module, dataset, device, attack, attack_bs: int, eval_bs: int
+):
     # pin_memory only if CUDA is available
     pin = device.type == "cuda"
     # 1) generate adversarials in micro-batches
-    atk_loader = DataLoader(dataset, batch_size=attack_bs, shuffle=False, num_workers=0, pin_memory=pin)
+    atk_loader = DataLoader(
+        dataset, batch_size=attack_bs, shuffle=False, num_workers=0, pin_memory=pin
+    )
     adv_x, adv_y = [], []
     for xb, yb in atk_loader:
         xb = xb.to(device, non_blocking=True)
@@ -164,11 +184,24 @@ def main():
     ap.add_argument("--img_size", type=int, default=224)
     ap.add_argument("--eps", default="0,2,4,6")
     ap.add_argument("--steps", default="0,5,10")
-    ap.add_argument("--alpha", type=float, default=1.0, help="alpha in /255 units (single value)")
-    ap.add_argument("--alpha_list", type=str, default="", help="comma-separated alphas in /255 units, e.g. '1,2,3'")
+    ap.add_argument(
+        "--alpha", type=float, default=1.0, help="alpha in /255 units (single value)"
+    )
+    ap.add_argument(
+        "--alpha_list",
+        type=str,
+        default="",
+        help="comma-separated alphas in /255 units, e.g. '1,2,3'",
+    )
     ap.add_argument("--out", default="results/metrics/robust_sweep.csv")
-    ap.add_argument("--fresh", action="store_true", help="ignore any existing CSV and start fresh")
-    ap.add_argument("--deterministic", action="store_true", help="cudnn deterministic mode & fixed seeds")
+    ap.add_argument(
+        "--fresh", action="store_true", help="ignore any existing CSV and start fresh"
+    )
+    ap.add_argument(
+        "--deterministic",
+        action="store_true",
+        help="cudnn deterministic mode & fixed seeds",
+    )
     args = ap.parse_args()
 
     # helpful echo
@@ -190,12 +223,22 @@ def main():
 
     # figure alphas to sweep
     if args.alpha_list.strip():
-        alphas_255 = [_safe_int(x.strip()) for x in args.alpha_list.split(",") if x.strip()]
+        alphas_255 = [
+            _safe_int(x.strip()) for x in args.alpha_list.split(",") if x.strip()
+        ]
     else:
         alphas_255 = [_safe_int(args.alpha)]
 
     # CSV header/append handling
-    header = ["attack", "eps_255", "steps", "alpha_255", "AUC_clean", "AUC_adv", "AUC_drop"]
+    header = [
+        "attack",
+        "eps_255",
+        "steps",
+        "alpha_255",
+        "AUC_clean",
+        "AUC_adv",
+        "AUC_drop",
+    ]
     first_write = True
     if args.fresh and os.path.exists(args.out):
         os.remove(args.out)
@@ -204,7 +247,9 @@ def main():
 
     ds = CSVImageDataset(args.csv, img_size=args.img_size, augment=False)
     pin = device.type == "cuda"
-    eval_loader = DataLoader(ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=pin)
+    eval_loader = DataLoader(
+        ds, batch_size=args.bs, shuffle=False, num_workers=0, pin_memory=pin
+    )
 
     model = load_model(args.model, args.ckpt, device)
     clean = auc_clean(model, eval_loader, device)
@@ -221,7 +266,11 @@ def main():
                     steps = _safe_int(r["steps"])
                     attack_name = r["attack"]
                     # prefer alpha_255 if present
-                    a255 = _safe_int(r["alpha_255"]) if "alpha_255" in r and r["alpha_255"] != "" else None
+                    a255 = (
+                        _safe_int(r["alpha_255"])
+                        if "alpha_255" in r and r["alpha_255"] != ""
+                        else None
+                    )
                     done.add((attack_name, eps255, steps, a255))
                 elif "eps" in r and "steps" in r:  # very old schema
                     eps255 = _safe_int(r["eps"])
@@ -242,18 +291,28 @@ def main():
                 key = (attack_label, eps255, steps, alpha255 if steps != 0 else None)
 
                 if key in done:
-                    print(f"[skip] already done -> {attack_label}@eps{eps255}, steps={steps}")
+                    print(
+                        f"[skip] already done -> {attack_label}@eps{eps255}, steps={steps}"
+                    )
                     continue
 
                 attack = (
                     FGSMAttack(epsilon=eps)
                     if steps == 0
-                    else PGDAttack(epsilon=eps, alpha=(alpha255 / 255.0), num_steps=steps)
+                    else PGDAttack(
+                        epsilon=eps, alpha=(alpha255 / 255.0), num_steps=steps
+                    )
                 )
 
                 try:
-                    adv_auc = auc_under_attack(model, ds, device, attack, args.attack_bs, args.bs)
-                    drop = (clean - adv_auc) if (not math.isnan(clean) and not math.isnan(adv_auc)) else float("nan")
+                    adv_auc = auc_under_attack(
+                        model, ds, device, attack, args.attack_bs, args.bs
+                    )
+                    drop = (
+                        (clean - adv_auc)
+                        if (not math.isnan(clean) and not math.isnan(adv_auc))
+                        else float("nan")
+                    )
                     row = {
                         "attack": attack_label,
                         "eps_255": eps255,

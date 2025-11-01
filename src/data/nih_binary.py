@@ -60,7 +60,10 @@ class CSVImageDataset(Dataset):
         records: List[_Record] = []
         with self.csv_path.open("r", newline="") as f:
             reader = csv.DictReader(f)
-            if "image_path" not in reader.fieldnames or "label" not in reader.fieldnames:
+            if (
+                "image_path" not in reader.fieldnames
+                or "label" not in reader.fieldnames
+            ):
                 raise ValueError("CSV must contain headers: image_path,label")
 
             for row in reader:

@@ -42,7 +42,9 @@ def make_sampler(y, balance: bool):
     p = max(y.mean(), 1e-6)
     w_pos = 0.5 / p
     w_neg = 0.5 / (1.0 - p)
-    weights = torch.as_tensor([w_pos if t > 0.5 else w_neg for t in y], dtype=torch.float)
+    weights = torch.as_tensor(
+        [w_pos if t > 0.5 else w_neg for t in y], dtype=torch.float
+    )
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
@@ -80,7 +82,9 @@ def main(cfg_path="configs/base.yaml"):
     torch.backends.cudnn.benchmark = True
 
     # --- logging: unique run dir ---
-    run_dir = os.path.join(cfg.log.outdir, datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    run_dir = os.path.join(
+        cfg.log.outdir, datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    )
     os.makedirs(run_dir, exist_ok=True)
     writer = SummaryWriter(run_dir)
     os.makedirs(cfg.ckpt.dir, exist_ok=True)
@@ -122,13 +126,17 @@ def main(cfg_path="configs/base.yaml"):
     p = max(float(np.mean(train_ds.y)), 1e-6)
     pos_weight = torch.tensor((1.0 - p) / p, dtype=torch.float, device=device)
     crit = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    opt = optim.AdamW(m.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay)
+    opt = optim.AdamW(
+        m.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay
+    )
     scaler = torch.amp.GradScaler("cuda", enabled=(use_cuda and cfg.train.amp))
 
     # --- schedulers ---
     sched = None
     if str(cfg.optim.scheduler).lower() == "plateau":
-        sched = optim.lr_scheduler.ReduceLROnPlateau(opt, mode="min", factor=0.5, patience=1)
+        sched = optim.lr_scheduler.ReduceLROnPlateau(
+            opt, mode="min", factor=0.5, patience=1
+        )
     elif str(cfg.optim.scheduler).lower() == "cosine":
         total_ep = int(cfg.train.epochs)
         warm = max(int(cfg.train.warmup_epochs), 0)
@@ -150,7 +158,9 @@ def main(cfg_path="configs/base.yaml"):
         for xb, yb in loader:
             xb = xb.to(device, non_blocking=True)
             yb = yb.to(device, non_blocking=True).unsqueeze(1)
-            with torch.set_grad_enabled(train), torch.amp.autocast("cuda", enabled=(use_cuda and cfg.train.amp)):
+            with torch.set_grad_enabled(train), torch.amp.autocast(
+                "cuda", enabled=(use_cuda and cfg.train.amp)
+            ):
                 out = m(xb)
                 loss = crit(out, yb)
             if train:
@@ -185,7 +195,8 @@ def main(cfg_path="configs/base.yaml"):
         writer.add_scalar("val/auroc", va_auc, ep)
         writer.add_scalar("lr", opt.param_groups[0]["lr"], ep)
         print(
-            f"Epoch {ep}: train {tr_loss:.4f}/{tr_auc:.3f} | " f"val {va_loss:.4f}/{va_auc:.3f} ({time.time()-t0:.1f}s)"
+            f"Epoch {ep}: train {tr_loss:.4f}/{tr_auc:.3f} | "
+            f"val {va_loss:.4f}/{va_auc:.3f} ({time.time()-t0:.1f}s)"
         )
 
         # save weights only
@@ -234,7 +245,9 @@ def _smoke_run() -> None:
 
 def _parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--smoke", action="store_true", help="Run 1-batch synthetic training")
+    p.add_argument(
+        "--smoke", action="store_true", help="Run 1-batch synthetic training"
+    )
     p.add_argument("--config", type=str, default=None, help="Path to OmegaConf YAML")
     # optional positional config, so both styles work:
     #   python -m src.train.baseline --config configs/tiny.yaml

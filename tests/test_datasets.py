@@ -14,8 +14,15 @@ def test_cxr_shape_and_dtype(tmp_path):
     img_path = root / "a.jpg"
     Image.new("RGB", (8, 8)).save(img_path)
     csv = tmp_path / "cxr.csv"
-    pd.DataFrame({"image_path": ["a.jpg"], "Atelectasis": [0], "Cardiomegaly": [1]}).to_csv(csv, index=False)
-    ds = NIHChestXray(str(csv), str(root), transform=cxr_val(64), target_cols=["Atelectasis", "Cardiomegaly"])
+    pd.DataFrame(
+        {"image_path": ["a.jpg"], "Atelectasis": [0], "Cardiomegaly": [1]}
+    ).to_csv(csv, index=False)
+    ds = NIHChestXray(
+        str(csv),
+        str(root),
+        transform=cxr_val(64),
+        target_cols=["Atelectasis", "Cardiomegaly"],
+    )
     x, y = ds[0]
     import torch
 
@@ -34,7 +41,14 @@ def test_isic_single_label(tmp_path):
     Image.new("RGB", (10, 10)).save(img)
     csv = tmp_path / "isic.csv"
     pd.DataFrame(
-        {"image_path": ["b.jpg"], "label": [1], "center": ["X"], "age": [60], "sex": ["M"], "location": ["back"]}
+        {
+            "image_path": ["b.jpg"],
+            "label": [1],
+            "center": ["X"],
+            "age": [60],
+            "sex": ["M"],
+            "location": ["back"],
+        }
     ).to_csv(csv, index=False)
     ds = ISICDataset(str(csv), str(root), transform=derm_val(32))
     x, y, meta = ds[0]

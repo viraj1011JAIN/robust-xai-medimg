@@ -15,7 +15,9 @@ def main(csv, bs=16, workers=2, iters=200, drop_last=False):
         raise RuntimeError("Dataset is empty after file existence filtering.")
 
     eff_bs = min(bs, n)  # ensure we can yield at least 1 batch
-    print(f"[bench] rows: {n} | requested bs={bs} -> eff_bs={eff_bs} | workers={workers}")
+    print(
+        f"[bench] rows: {n} | requested bs={bs} -> eff_bs={eff_bs} | workers={workers}"
+    )
 
     kwargs = dict(
         num_workers=workers,

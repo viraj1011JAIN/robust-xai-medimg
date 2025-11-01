@@ -9,7 +9,12 @@ from torch.utils.data import Dataset
 
 class ISICDataset(Dataset):
     def __init__(
-        self, csv_path, images_root, label_col="label", meta_cols=("center", "age", "sex", "location"), transform=None
+        self,
+        csv_path,
+        images_root,
+        label_col="label",
+        meta_cols=("center", "age", "sex", "location"),
+        transform=None,
     ):
         self.df = pd.read_csv(csv_path)
         self.images_root = images_root

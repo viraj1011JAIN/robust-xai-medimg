@@ -14,18 +14,24 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install deps with constraints
         run: |
           python -m pip install -U pip
-          pip install -r requirements.lock.txt -c constraints.txt
+          pip install -r requirements.freeze.txt -c constraints.txt
           pip install --no-deps "git+https://github.com/jacobgil/pytorch-grad-cam.git"
 
       - name: Sanity checks (NumPy/SciPy/OpenCV)
         shell: python
         run: |
+          from importlib.metadata import version, PackageNotFoundError
           import numpy, scipy, cv2
+          def has_dist(n):
+              try: version(n); return True
+              except PackageNotFoundError: return False
+          is_headless = has_dist("opencv-python-headless") and not has_dist("opencv-python") and not has_dist("opencv-contrib-python")
           print("NumPy", numpy.__version__)
           print("SciPy", scipy.__version__)
-          print("OpenCV headless:", "headless" in cv2.getBuildInformation().lower())
+          print("cv2 path:", cv2.__file__)
+          print("headless (by dist metadata):", is_headless)

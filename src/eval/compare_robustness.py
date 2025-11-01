@@ -18,9 +18,14 @@ def _load_sweep(path: str) -> pd.DataFrame:
     if {"eps_255", "steps", "AUC_adv"}.issubset(df.columns):
         out = df[["eps_255", "steps", "AUC_adv"]].copy()
     elif {"eps", "steps", "auroc"}.issubset(df.columns):
-        out = df.rename(columns={"eps": "eps_255", "auroc": "AUC_adv"})[["eps_255", "steps", "AUC_adv"]].copy()
+        out = df.rename(columns={"eps": "eps_255", "auroc": "AUC_adv"})[
+            ["eps_255", "steps", "AUC_adv"]
+        ].copy()
     else:
-        raise ValueError(f"CSV {path} does not contain required columns. " f"Found: {list(df.columns)}")
+        raise ValueError(
+            f"CSV {path} does not contain required columns. "
+            f"Found: {list(df.columns)}"
+        )
 
     # Ensure numeric
     out["eps_255"] = pd.to_numeric(out["eps_255"], errors="coerce")
@@ -42,7 +47,9 @@ def _align(base: pd.DataFrame, tri: pd.DataFrame) -> pd.DataFrame:
     Align on (eps_255, steps) and return a single DataFrame with:
       ['eps_255','steps','AUC_adv_base','AUC_adv_tri']
     """
-    m = base.merge(tri, on=["eps_255", "steps"], how="inner", suffixes=("_base", "_tri"))
+    m = base.merge(
+        tri, on=["eps_255", "steps"], how="inner", suffixes=("_base", "_tri")
+    )
     # numeric and sorted
     m = m.sort_values(["steps", "eps_255"]).reset_index(drop=True)
     return m
@@ -71,7 +78,9 @@ def plot_delta_heatmap(both: pd.DataFrame, out_png: str) -> None:
     plt.close()
 
 
-def _plot_lines_for_steps(both: pd.DataFrame, steps: int, out_png: str, title: str) -> None:
+def _plot_lines_for_steps(
+    both: pd.DataFrame, steps: int, out_png: str, title: str
+) -> None:
     """Helper to draw a 2-line chart (base vs tri) at a fixed steps value."""
     s = both[both["steps"] == steps].sort_values("eps_255")
     plt.figure(figsize=(6.2, 4.2), dpi=160)
@@ -88,7 +97,9 @@ def _plot_lines_for_steps(both: pd.DataFrame, steps: int, out_png: str, title: s
 
 
 def plot_pgd10_lines(both: pd.DataFrame, out_png: str) -> None:
-    _plot_lines_for_steps(both, steps=10, out_png=out_png, title="PGD-10: AUC_adv vs Îµ")
+    _plot_lines_for_steps(
+        both, steps=10, out_png=out_png, title="PGD-10: AUC_adv vs Îµ"
+    )
 
 
 def plot_fgsm_lines(both: pd.DataFrame, out_png: str) -> None:
@@ -119,7 +130,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base_csv", required=True, help="baseline sweep CSV")
     ap.add_argument("--tri_csv", required=True, help="tri-objective sweep CSV")
-    ap.add_argument("--outdir", default="results/metrics", help="where to write figures/tables")
+    ap.add_argument(
+        "--outdir", default="results/metrics", help="where to write figures/tables"
+    )
     args = ap.parse_args()
 
     base = _load_sweep(args.base_csv)
@@ -127,7 +140,9 @@ def main() -> None:
     both = _align(base, tri)  # columns: eps_255, steps, AUC_adv_base, AUC_adv_tri
 
     os.makedirs(args.outdir, exist_ok=True)
-    plot_delta_heatmap(both, os.path.join(args.outdir, "robust_compare_delta_heatmap.png"))
+    plot_delta_heatmap(
+        both, os.path.join(args.outdir, "robust_compare_delta_heatmap.png")
+    )
     plot_pgd10_lines(both, os.path.join(args.outdir, "robust_compare_pgd10.png"))
     plot_fgsm_lines(both, os.path.join(args.outdir, "robust_compare_fgsm.png"))
     write_delta_table(both, os.path.join(args.outdir, "robust_compare_delta_table.md"))

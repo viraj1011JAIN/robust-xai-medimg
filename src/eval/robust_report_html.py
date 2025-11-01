@@ -27,7 +27,13 @@ def _section(size_dir: str, heading: str) -> str:
     p20 = os.path.join(size_dir, "robust_compare_pgd20.png")
     table = os.path.join(size_dir, "robust_compare_delta_table.md")
 
-    imgs = [("Î” heatmap", hmap), ("FGSM", fgsm), ("PGD-5", p5), ("PGD-10", p10), ("PGD-20", p20)]
+    imgs = [
+        ("Î” heatmap", hmap),
+        ("FGSM", fgsm),
+        ("PGD-5", p5),
+        ("PGD-10", p10),
+        ("PGD-20", p20),
+    ]
     blocks = [f"<h2>{heading}</h2>"]
     for title, path in imgs:
         if os.path.exists(path):
@@ -44,7 +50,9 @@ def _section(size_dir: str, heading: str) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="results/metrics/robust_report.html")
-    ap.add_argument("--title", default="Robustness Comparison â€” Baseline vs Tri-Objective")
+    ap.add_argument(
+        "--title", default="Robustness Comparison â€” Baseline vs Tri-Objective"
+    )
     ap.add_argument("--dir64", default="results/metrics/64")
     ap.add_argument("--dir224", default="results/metrics/224")
     args = ap.parse_args()

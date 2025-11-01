@@ -12,7 +12,9 @@ except Exception:
     _GRADCAM_OK = False
 
 requires_gradcam = pytest.mark.xfail(
-    not _GRADCAM_OK, reason="gradcam backend not available in this environment", strict=False
+    not _GRADCAM_OK,
+    reason="gradcam backend not available in this environment",
+    strict=False,
 )
 
 

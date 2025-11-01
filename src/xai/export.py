@@ -93,7 +93,9 @@ def save_gradcam_png(model: torch.nn.Module, x: torch.Tensor, out_path: Path) ->
     # Resize to input spatial size
     _, _, H, W = x.shape
     if h.shape[-2:] != (H, W):
-        h = F.interpolate(h.unsqueeze(0), size=(H, W), mode="bilinear", align_corners=False).squeeze(0)
+        h = F.interpolate(
+            h.unsqueeze(0), size=(H, W), mode="bilinear", align_corners=False
+        ).squeeze(0)
 
     h2d = h.squeeze(0)  # [H,W]
     # Normalize to 0..1
@@ -125,7 +127,9 @@ def _load_one_from_cfg(cfg_path: str, split: str = "val") -> torch.Tensor:
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="configs/tiny.yaml", help="Path to YAML config")
-    p.add_argument("--out", default="results/figures/gradcam_tiny.png", help="Output PNG path")
+    p.add_argument(
+        "--out", default="results/figures/gradcam_tiny.png", help="Output PNG path"
+    )
     p.add_argument("--split", choices=["val", "train"], default="val")
     args = p.parse_args()
 

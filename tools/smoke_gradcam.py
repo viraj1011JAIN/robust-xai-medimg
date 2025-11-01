@@ -11,7 +11,9 @@ from torchvision.models import ResNet18_Weights, resnet18
 def pick_device(requested: str | None) -> str:
     if requested:
         if requested == "cuda" and not torch.cuda.is_available():
-            print("Requested CUDA but PyTorch was built without CUDA; falling back to CPU.")
+            print(
+                "Requested CUDA but PyTorch was built without CUDA; falling back to CPU."
+            )
             return "cpu"
         return requested
     return "cuda" if torch.cuda.is_available() else "cpu"
@@ -20,7 +22,10 @@ def pick_device(requested: str | None) -> str:
 def main():
     p = argparse.ArgumentParser()
     p.add_argument(
-        "--device", choices=["cpu", "cuda"], default=None, help="Force device (default: cuda if available else cpu)"
+        "--device",
+        choices=["cpu", "cuda"],
+        default=None,
+        help="Force device (default: cuda if available else cpu)",
     )
     args = p.parse_args()
     device = pick_device(args.device)

@@ -20,7 +20,9 @@ def main():
     else:
         raise ValueError("CSV does not contain expected columns.")
 
-    pivot = df.pivot_table(index=eps_col, columns=steps_col, values=y_col, aggfunc="mean").sort_index()
+    pivot = df.pivot_table(
+        index=eps_col, columns=steps_col, values=y_col, aggfunc="mean"
+    ).sort_index()
 
     plt.figure(figsize=(6, 4.5))
     for steps in pivot.columns:

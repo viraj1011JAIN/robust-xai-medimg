@@ -26,7 +26,11 @@ def make_splits(csv_path, label_col, out_json, seed=42, train=0.7, val=0.15, tes
     idx_train, idx_val = next(sss2.split(df_trainval, y_trainval))
     splits = {
         "seed": seed,
-        "counts": {"train": int(len(idx_train)), "val": int(len(idx_val)), "test": int(len(idx_test))},
+        "counts": {
+            "train": int(len(idx_train)),
+            "val": int(len(idx_val)),
+            "test": int(len(idx_test)),
+        },
         "indices": {
             "train": df_trainval.index[idx_train].tolist(),
             "val": df_trainval.index[idx_val].tolist(),
