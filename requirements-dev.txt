@@ -1,4 +1,3 @@
-﻿pre-commit==4.0.1
-black==24.10.0
-isort==5.13.2
-flake8==7.1.1
+black==25.9.0
+isort==7.0.0
+flake8==7.3.0
