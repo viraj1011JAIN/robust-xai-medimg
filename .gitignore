@@ -53,3 +53,5 @@ venv/
 .venv/
 venv/
 
+
+gradcam_smoke.png
