@@ -1,31 +1,12 @@
 ﻿repos:
   - repo: https://github.com/psf/black
     rev: 25.9.0
-    hooks:
-      - id: black
-        args: ["--line-length=120"]
+    hooks: [ { id: black } ]
 
   - repo: https://github.com/PyCQA/isort
     rev: 7.0.0
-    hooks:
-      - id: isort
-        args: ["--profile=black"]
+    hooks: [ { id: isort } ]
 
   - repo: https://github.com/PyCQA/flake8
     rev: 7.3.0
-    hooks:
-      - id: flake8
-        args: ["--max-line-length=120","--extend-ignore=E203,W503"]
-        additional_dependencies: ["flake8-bugbear"]
-
-# Skip vendored/env/data/results on hook runs
-exclude: |
-  ^(
-    \.venv.*|
-    venv/|
-    .*/site-packages/|
-    data/|
-    results/|
-    .*/__pycache__/|
-    .*/\.pytest_cache/
-  )
+    hooks: [ { id: flake8 } ]
