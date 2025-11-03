@@ -1,59 +1,111 @@
+from __future__ import annotations
+
+from typing import Optional, Tuple
+
 import torch
-import torch.nn as nn
+from torch import nn
+
+__all__ = ["PGDAttack", "pgd_attack"]
 
 
 class PGDAttack:
     """
-    Projected Gradient Descent (Linf).
-    Args:
-        epsilon: Linf budget (0..1)
-        alpha: step size (0..1)
-        num_steps: iterations
-        random_start: if True, start within epsilon-ball
-        loss_fn: default BCEWithLogitsLoss (binary)
+    Basic untargeted PGD attack.
+    - Guarantees ||x_adv - x||_∞ ≤ eps.
+    - Does NOT clamp to a value range unless `clamp=(low, high)` is provided.
     """
 
     def __init__(
         self,
-        epsilon: float,
+        model: nn.Module,
+        eps: float,
         alpha: float,
-        num_steps: int,
+        steps: int,
+        *,
         random_start: bool = True,
-        loss_fn: nn.Module | None = None,
-    ):
-        self.epsilon = float(epsilon)
+        clamp: Optional[Tuple[float, float]] = None,  # default: no clamping
+        loss_fn: Optional[nn.Module] = None,
+    ) -> None:
+        self.model = model
+        self.eps = float(eps)
         self.alpha = float(alpha)
-        self.num_steps = int(num_steps)
+        self.steps = int(steps)
         self.random_start = bool(random_start)
-        self.loss_fn = loss_fn or nn.BCEWithLogitsLoss()
+        self.clamp = clamp
+        self.loss_fn = loss_fn or nn.CrossEntropyLoss()
 
-    def __call__(self, model, x, y):
-        was_training = model.training
+    def __call__(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return pgd_attack(
+            self.model,
+            x,
+            y,
+            eps=self.eps,
+            alpha=self.alpha,
+            steps=self.steps,
+            random_start=self.random_start,
+            clamp=self.clamp,
+            loss_fn=self.loss_fn,
+        )
+
+
+def pgd_attack(
+    model: nn.Module,
+    x: torch.Tensor,
+    y: torch.Tensor,
+    *,
+    eps: float,
+    alpha: float,
+    steps: int,
+    random_start: bool = True,
+    clamp: Optional[Tuple[float, float]] = None,  # default: no clamping
+    loss_fn: Optional[nn.Module] = None,
+) -> torch.Tensor:
+    """
+    Projected Gradient Descent (untargeted).
+    - If eps == 0 or steps == 0 → returns x unchanged (no-op).
+    - Preserves model train/eval state.
+    - Always projects back to the L∞ ball around the ORIGINAL x.
+    - Optional clamping only if `clamp=(low, high)` is provided.
+    """
+    loss_fn = loss_fn or nn.CrossEntropyLoss()
+
+    # Accept one-hot labels as well
+    if y.dim() > 1:
+        y = y.argmax(dim=-1)
+
+    was_training = model.training
+    try:
         model.eval()
 
-        x0 = x.detach()
-        if self.random_start and self.epsilon > 0:
-            delta = torch.empty_like(x0).uniform_(-self.epsilon, self.epsilon)
-            x_adv = (x0 + delta).clamp(0.0, 1.0)
-        else:
-            x_adv = x0.clone()
+        x_orig = x.detach()
+        x_adv = x_orig.clone()
 
-        for _ in range(self.num_steps):
-            x_adv = x_adv.detach().clone().requires_grad_(True)
-            logits = model(x_adv).squeeze()
-            loss = self.loss_fn(logits, y.float())
+        if eps == 0.0 or steps == 0:
+            return x_adv  # no-op
+
+        if random_start:
+            x_adv = x_adv + torch.empty_like(x_adv).uniform_(-eps, eps)
+
+        for _ in range(steps):
+            x_adv.requires_grad_(True)
+            model.zero_grad(set_to_none=True)
+            logits = model(x_adv)
+            loss = loss_fn(logits, y)
             loss.backward()
+            grad = x_adv.grad.detach()
 
-            with torch.no_grad():
-                grad_sign = x_adv.grad.sign()
-                x_adv = x_adv + self.alpha * grad_sign
-                # project to Linf-ball around x0
-                x_adv = torch.max(
-                    torch.min(x_adv, x0 + self.epsilon), x0 - self.epsilon
-                )
-                x_adv.clamp_(0.0, 1.0)
-            x_adv.grad = None
+            # gradient sign step
+            x_adv = x_adv.detach() + alpha * grad.sign()
 
-        if was_training:
-            model.train()
+            # project back to eps-ball around original x
+            eta = torch.clamp(x_adv - x_orig, min=-eps, max=eps)
+            x_adv = (x_orig + eta).detach()
+
+            # optional clamping
+            if clamp is not None:
+                lo, hi = clamp
+                x_adv = x_adv.clamp(lo, hi)
+
         return x_adv.detach()
+    finally:
+        model.train(was_training)
