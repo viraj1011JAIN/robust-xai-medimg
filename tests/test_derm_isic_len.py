@@ -148,9 +148,7 @@ def test_isic_transform_tensor_output(tmp_path):
     def tensor_transform(img):
         return torch.from_numpy(img).permute(2, 0, 1).float() / 255.0
 
-    ds = ISICDataset(
-        csv_path=str(csv), images_root=str(tmp_path), transform=tensor_transform
-    )
+    ds = ISICDataset(csv_path=str(csv), images_root=str(tmp_path), transform=tensor_transform)
     x, y, meta = ds[0]
 
     assert isinstance(x, torch.Tensor), "Should return tensor"
@@ -181,9 +179,7 @@ def test_isic_transform_ndarray_output(tmp_path):
     def array_transform(img):
         return img  # Return as-is
 
-    ds = ISICDataset(
-        csv_path=str(csv), images_root=str(tmp_path), transform=array_transform
-    )
+    ds = ISICDataset(csv_path=str(csv), images_root=str(tmp_path), transform=array_transform)
     x, y, meta = ds[0]
 
     assert isinstance(x, torch.Tensor), "Should convert ndarray to tensor"

@@ -162,9 +162,7 @@ def test_nih_with_img_root_fallback(tmp_path):
     Image.new("RGB", (64, 64), color=(128, 128, 128)).save(img_path)
 
     # Use img_root instead of images_root
-    dataset = NIHBinarizedDataset(
-        csv_path=str(csv_path), classes=["A"], img_root=str(tmp_path)
-    )
+    dataset = NIHBinarizedDataset(csv_path=str(csv_path), classes=["A"], img_root=str(tmp_path))
 
     x, y, meta = dataset[0]
     assert x is not None

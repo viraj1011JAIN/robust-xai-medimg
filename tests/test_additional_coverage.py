@@ -132,9 +132,7 @@ def test_pgd_with_custom_loss_fn():
 
     custom_loss = torch.nn.CrossEntropyLoss()
 
-    adv = pgd.pgd_attack(
-        model, x, y, eps=0.05, alpha=0.01, steps=5, loss_fn=custom_loss
-    )
+    adv = pgd.pgd_attack(model, x, y, eps=0.05, alpha=0.01, steps=5, loss_fn=custom_loss)
 
     assert adv.shape == x.shape
 
@@ -304,9 +302,7 @@ def test_isic_transform_hwc_tensor(tmp_path):
     def hwc_transform(img):
         return torch.from_numpy(img).float() / 255.0
 
-    ds = ISICDataset(
-        csv_path=str(csv_path), images_root=str(tmp_path), transform=hwc_transform
-    )
+    ds = ISICDataset(csv_path=str(csv_path), images_root=str(tmp_path), transform=hwc_transform)
     x, y, meta = ds[0]
 
     assert x.shape[0] == 3  # Should be converted to CHW
@@ -364,9 +360,7 @@ def test_isic_invalid_transform_output(tmp_path):
     def bad_transform(img):
         return "invalid"
 
-    ds = ISICDataset(
-        csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
-    )
+    ds = ISICDataset(csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform)
 
     with pytest.raises(TypeError):
         x, y, meta = ds[0]

@@ -180,9 +180,7 @@ def test_nih_missing_csv_raises():
 def test_imread_gray_function(tmp_path):
     """Test _imread_gray helper function."""
     img_path = tmp_path / "gray.png"
-    Image.fromarray((np.random.rand(16, 16) * 255).astype("uint8")).convert("L").save(
-        img_path
-    )
+    Image.fromarray((np.random.rand(16, 16) * 255).astype("uint8")).convert("L").save(img_path)
 
     result = N._imread_gray(str(img_path))
     assert result.ndim == 2

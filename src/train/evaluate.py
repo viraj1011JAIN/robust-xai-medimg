@@ -35,18 +35,12 @@ def _build_loaders(cfg) -> Tuple[DataLoader, DataLoader]:
     if common["num_workers"] > 0:
         common["prefetch_factor"] = 2
 
-    train_ld = DataLoader(
-        train_ds, batch_size=cfg.data.batch_size, shuffle=True, **common
-    )
-    val_ld = DataLoader(
-        val_ds, batch_size=max(1, cfg.data.batch_size * 2), shuffle=False, **common
-    )
+    train_ld = DataLoader(train_ds, batch_size=cfg.data.batch_size, shuffle=True, **common)
+    val_ld = DataLoader(val_ds, batch_size=max(1, cfg.data.batch_size * 2), shuffle=False, **common)
     return train_ld, val_ld
 
 
-def evaluate(
-    cfg_path: str, ckpt: str | None = None, dry_run: bool = False
-) -> tuple[float, float]:
+def evaluate(cfg_path: str, ckpt: str | None = None, dry_run: bool = False) -> tuple[float, float]:
     cfg = OmegaConf.load(cfg_path)
     cfg = OmegaConf.merge(
         {
@@ -99,26 +93,20 @@ def evaluate(
         auc = float("nan")
 
     avg_loss = tot / max(1, n)
-    print(
-        f"[EVAL] loss={avg_loss:.4f}  auroc={auc:.3f}  (batches={'1' if dry_run else 'all'})"
-    )
+    print(f"[EVAL] loss={avg_loss:.4f}  auroc={auc:.3f}  (batches={'1' if dry_run else 'all'})")
     return avg_loss, float(auc)
 
 
 def _parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument(
-        "--config", required=True, help="Path to YAML config (e.g., configs/tiny.yaml)"
-    )
+    p.add_argument("--config", required=True, help="Path to YAML config (e.g., configs/tiny.yaml)")
     p.add_argument("--ckpt", default=None, help="Path to weights (optional)")
     p.add_argument(
         "--dry-run",
         action="store_true",
         help="Run one validation batch without requiring a checkpoint",
     )
-    p.add_argument(
-        "--out", default=None, help="Write CSV summary to this path (loss,auroc)"
-    )
+    p.add_argument("--out", default=None, help="Write CSV summary to this path (loss,auroc)")
     return p.parse_args()
 
 

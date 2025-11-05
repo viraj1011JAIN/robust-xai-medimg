@@ -24,9 +24,7 @@ def test_padchest_and_vindr_ctor_and_transform(tmp_path):
     imgp = tmp_path / "imgs" / "x.png"
     _mk_img(imgp)
     csv = tmp_path / "cxr.csv"
-    pd.DataFrame({"image_path": ["imgs/x.png"], "A": [1], "B": [0]}).to_csv(
-        csv, index=False
-    )
+    pd.DataFrame({"image_path": ["imgs/x.png"], "A": [1], "B": [0]}).to_csv(csv, index=False)
 
     for Cls in (getattr(C, "PadChest", None), getattr(C, "VinDrCXR", None)):
         if Cls is None:
@@ -39,6 +37,4 @@ def test_padchest_and_vindr_ctor_and_transform(tmp_path):
         )
         x, y = ds[0]
         assert isinstance(x, torch.Tensor) and x.shape[0] == 3
-        assert (
-            isinstance(y, torch.Tensor) and y.dtype == torch.float32 and y.numel() == 2
-        )
+        assert isinstance(y, torch.Tensor) and y.dtype == torch.float32 and y.numel() == 2

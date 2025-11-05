@@ -76,9 +76,7 @@ def _align(base_rows, tri_rows):
     for r in tri_rows:
         if "auroc" in r:
             tri_map[_group_key(r)] = float(r["auroc"])
-    keys = sorted(
-        set(base_map.keys()) | set(tri_map.keys()), key=lambda t: (t[0], t[1], t[2])
-    )
+    keys = sorted(set(base_map.keys()) | set(tri_map.keys()), key=lambda t: (t[0], t[1], t[2]))
     out: Dict[Tuple[str, int, float], Tuple[float, float]] = {}
     for k in keys:
         out[k] = (base_map.get(k, float("nan")), tri_map.get(k, float("nan")))
@@ -179,9 +177,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", required=True, help="Baseline sweep CSV")
     ap.add_argument("--tri", required=True, help="Tri-obj sweep CSV")
-    ap.add_argument(
-        "--outdir", default="results/metrics", help="Output directory for plots/tables"
-    )
+    ap.add_argument("--outdir", default="results/metrics", help="Output directory for plots/tables")
     args = ap.parse_args()
 
     base = Path(args.base)

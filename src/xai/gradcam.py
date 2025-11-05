@@ -57,9 +57,7 @@ class GradCAM:
             squeeze = two_arg_call
 
         if not isinstance(x, torch.Tensor):
-            raise TypeError(
-                "Input x must be a torch.Tensor of shape [N,C,H,W]"
-            )  # pragma: no cover
+            raise TypeError("Input x must be a torch.Tensor of shape [N,C,H,W]")  # pragma: no cover
 
         self.model.eval()
         x = x.detach().requires_grad_(True)
@@ -69,9 +67,7 @@ class GradCAM:
             if isinstance(logits, (tuple, list)) and len(logits) > 0:
                 logits = logits[0]
             else:  # pragma: no cover
-                raise TypeError(
-                    "Model output must be a Tensor or non-empty tuple/list."
-                )
+                raise TypeError("Model output must be a Tensor or non-empty tuple/list.")
 
         if logits.ndim == 0:
             score = logits

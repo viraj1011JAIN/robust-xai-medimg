@@ -50,9 +50,7 @@ def _section(size_dir: str, heading: str) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="results/metrics/robust_report.html")
-    ap.add_argument(
-        "--title", default="Robustness Comparison â€” Baseline vs Tri-Objective"
-    )
+    ap.add_argument("--title", default="Robustness Comparison â€” Baseline vs Tri-Objective")
     ap.add_argument("--dir64", default="results/metrics/64")
     ap.add_argument("--dir224", default="results/metrics/224")
     args = ap.parse_args()

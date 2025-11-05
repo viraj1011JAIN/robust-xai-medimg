@@ -17,9 +17,9 @@ def test_cxr_shape_and_dtype(tmp_path):
     img_path = root / "a.jpg"
     Image.new("RGB", (8, 8)).save(img_path)
     csv = tmp_path / "cxr.csv"
-    pd.DataFrame(
-        {"image_path": ["a.jpg"], "Atelectasis": [0], "Cardiomegaly": [1]}
-    ).to_csv(csv, index=False)
+    pd.DataFrame({"image_path": ["a.jpg"], "Atelectasis": [0], "Cardiomegaly": [1]}).to_csv(
+        csv, index=False
+    )
     ds = NIHChestXray(
         str(csv),
         str(root),

@@ -297,9 +297,7 @@ def test_nih_binarized_labels_with_exception_handling(tmp_path):
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["Image", "Pneumonia", "Edema"])
         writer.writeheader()
-        writer.writerow(
-            {"Image": "img1.png", "Pneumonia": "invalid", "Edema": "1"}  # Non-numeric
-        )
+        writer.writerow({"Image": "img1.png", "Pneumonia": "invalid", "Edema": "1"})  # Non-numeric
 
     img_path = tmp_path / "img1.png"
     img = Image.new("L", (64, 64), color=128)
@@ -336,6 +334,4 @@ def test_csv_image_dataset_float_label_precision(tmp_path):
 
 
 if __name__ == "__main__":
-    pytest.main(
-        [__file__, "-v", "--cov=src.data.nih_binary", "--cov-report=term-missing"]
-    )
+    pytest.main([__file__, "-v", "--cov=src.data.nih_binary", "--cov-report=term-missing"])

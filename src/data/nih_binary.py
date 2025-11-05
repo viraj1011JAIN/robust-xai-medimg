@@ -78,10 +78,7 @@ class CSVImageDataset(Dataset):
         recs: List[_ClsRec] = []
         with self.csv_path.open("r", newline="") as f:
             reader = csv.DictReader(f)
-            if (
-                "image_path" not in reader.fieldnames
-                or "label" not in reader.fieldnames
-            ):
+            if "image_path" not in reader.fieldnames or "label" not in reader.fieldnames:
                 raise ValueError("CSV must contain headers: image_path,label")
             for row in reader:
                 p = (self.root / row["image_path"]).resolve()
@@ -169,9 +166,7 @@ class NIHBinarizedDataset(Dataset):
 
                 meta = {
                     "image": rel,
-                    "patient_id": (
-                        str(row.get("PatientID")) if "PatientID" in row else ""
-                    ),
+                    "patient_id": (str(row.get("PatientID")) if "PatientID" in row else ""),
                     "site": str(row.get("Site")) if "Site" in row else "",
                 }
                 items.append((abs_path, lbls, meta))
@@ -184,25 +179,17 @@ class NIHBinarizedDataset(Dataset):
         return len(self._paths)
 
     def _apply_transform(self, img_hwc_uint8: np.ndarray) -> Tensor:
-        out = (
-            self.transform(img_hwc_uint8) if callable(self.transform) else img_hwc_uint8
-        )
+        out = self.transform(img_hwc_uint8) if callable(self.transform) else img_hwc_uint8
         if isinstance(out, dict):
             out = out.get("image")
 
         # Accept robustly: [H,W], [H,W,1/3], [1/3,H,W], and with a leading singleton.
         if isinstance(out, torch.Tensor):
             t = out
-            if (
-                t.ndim == 4
-                and t.shape[0] == 1
-                and (t.shape[-1] in (1, 3) or t.shape[1] in (1, 3))
-            ):
+            if t.ndim == 4 and t.shape[0] == 1 and (t.shape[-1] in (1, 3) or t.shape[1] in (1, 3)):
                 t = t.squeeze(0)
             # unified channels-first/last condition (branch-neutral)
-            if t.ndim == 3 and (
-                t.shape[-1] in (1, 3) or t.shape[0] in (1, 3)
-            ):  # pragma: no branch
+            if t.ndim == 3 and (t.shape[-1] in (1, 3) or t.shape[0] in (1, 3)):  # pragma: no branch
                 return (
                     t.permute(2, 0, 1).contiguous().float()
                     if t.shape[-1] in (1, 3)
@@ -211,22 +198,14 @@ class NIHBinarizedDataset(Dataset):
             if t.ndim == 2:  # pragma: no cover (rare grayscale tensor)
                 return t.unsqueeze(0).contiguous().float()
             # defensive shape
-            raise TypeError(
-                "Transform returned Tensor with unexpected shape"
-            )  # pragma: no cover
+            raise TypeError("Transform returned Tensor with unexpected shape")  # pragma: no cover
 
         if isinstance(out, np.ndarray):
             a = out
-            if (
-                a.ndim == 4
-                and a.shape[0] == 1
-                and (a.shape[-1] in (1, 3) or a.shape[1] in (1, 3))
-            ):
+            if a.ndim == 4 and a.shape[0] == 1 and (a.shape[-1] in (1, 3) or a.shape[1] in (1, 3)):
                 a = np.squeeze(a, axis=0)
             # mirror unified channels-first/last; single return
-            if a.ndim == 3 and (
-                a.shape[-1] in (1, 3) or a.shape[0] in (1, 3)
-            ):  # pragma: no branch
+            if a.ndim == 3 and (a.shape[-1] in (1, 3) or a.shape[0] in (1, 3)):  # pragma: no branch
                 out_t = (
                     _to_tensor_01(a)
                     if a.shape[-1] in (1, 3)
@@ -236,9 +215,7 @@ class NIHBinarizedDataset(Dataset):
             if a.ndim == 2:  # pragma: no cover (rare grayscale ndarray)
                 return torch.from_numpy(a).unsqueeze(0).contiguous().float()
             # defensive shape
-            raise TypeError(
-                "Transform returned ndarray with unexpected shape"
-            )  # pragma: no cover
+            raise TypeError("Transform returned ndarray with unexpected shape")  # pragma: no cover
 
         # exact message asserted elsewhere; defensive
         raise TypeError("Transform must return Tensor/ndarray")  # pragma: no cover

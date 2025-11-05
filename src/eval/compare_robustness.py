@@ -23,9 +23,7 @@ def _load_sweep(p: str) -> pd.DataFrame:
     return out.sort_values(["eps_255", "steps"]).reset_index(drop=True)
 
 
-def _align(
-    baseline: pd.DataFrame, triobj: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _align(baseline: pd.DataFrame, triobj: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     key = ["eps_255", "steps"]
     merged = baseline.merge(triobj, on=key, how="inner", suffixes=("_base", "_tri"))
     return merged[[*key, "AUC_adv_base"]], merged[[*key, "AUC_adv_tri"]]
@@ -103,13 +101,9 @@ def main() -> None:
     merged = base.merge(tri, on=["eps_255", "steps"], suffixes=("_base", "_tri"))
 
     os.makedirs(args.outdir, exist_ok=True)
-    plot_delta_heatmap(
-        merged, os.path.join(args.outdir, "robust_compare_delta_heatmap.png")
-    )
+    plot_delta_heatmap(merged, os.path.join(args.outdir, "robust_compare_delta_heatmap.png"))
     plot_pgd10_lines(merged, os.path.join(args.outdir, "robust_compare_pgd10.png"))
-    write_delta_table(
-        merged, os.path.join(args.outdir, "robust_compare_delta_table.md")
-    )
+    write_delta_table(merged, os.path.join(args.outdir, "robust_compare_delta_table.md"))
     print("[saved] delta heatmap, PGD10 lines, and table in", args.outdir)
 
 

@@ -23,9 +23,7 @@ def test_cxr_transform_none_and_targets(tmp_path):
     imgp = tmp_path / "imgs" / "a.png"
     _mk_img(imgp)
     csv = tmp_path / "cxr.csv"
-    pd.DataFrame({"image_path": ["imgs/a.png"], "A": [1], "B": [0]}).to_csv(
-        csv, index=False
-    )
+    pd.DataFrame({"image_path": ["imgs/a.png"], "A": [1], "B": [0]}).to_csv(csv, index=False)
 
     ds = C.NIHChestXray(str(csv), str(tmp_path), transform=None, target_cols=["A", "B"])
     x, y = ds[0]

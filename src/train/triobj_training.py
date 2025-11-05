@@ -107,8 +107,6 @@ class TriObjectiveLoss:
         loss_expl = self._maybe_expl_loss(x, x_adv)
         metrics["loss_expl"] = float(loss_expl.detach())
 
-        loss_total = (
-            loss_task + self.lambda_rob * loss_rob + self.lambda_expl * loss_expl
-        )
+        loss_total = loss_task + self.lambda_rob * loss_rob + self.lambda_expl * loss_expl
         metrics["loss_total"] = float(loss_total.detach())
         return loss_total, metrics

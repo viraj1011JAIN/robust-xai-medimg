@@ -6,9 +6,7 @@ from src.attacks.pgd import PGDAttack
 
 def test_pgdattack_init_and_call_hits_wrapper_lines():
     """Test PGDAttack wrapper class initialization and call."""
-    model = torch.nn.Sequential(
-        torch.nn.Flatten(), torch.nn.Linear(3 * 8 * 8, 2)
-    ).eval()
+    model = torch.nn.Sequential(torch.nn.Flatten(), torch.nn.Linear(3 * 8 * 8, 2)).eval()
     x = torch.rand(2, 3, 8, 8)
     y = torch.tensor([0, 1])
 

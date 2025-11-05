@@ -52,9 +52,7 @@ def test_cxr_getitem_with_transform(tmp_path):
 
     # Create CSV
     csv_path = tmp_path / "data.csv"
-    pd.DataFrame([{"image_path": "imgs/test.png", "Atelectasis": 1}]).to_csv(
-        csv_path, index=False
-    )
+    pd.DataFrame([{"image_path": "imgs/test.png", "Atelectasis": 1}]).to_csv(csv_path, index=False)
 
     ds = NIHChestXray(
         str(csv_path),
@@ -84,9 +82,7 @@ def test_derm_metadata_missing_columns(tmp_path):
 
     # CSV without optional metadata columns
     csv_path = tmp_path / "minimal.csv"
-    pd.DataFrame([{"image_path": "imgs/test.png", "label": 0}]).to_csv(
-        csv_path, index=False
-    )
+    pd.DataFrame([{"image_path": "imgs/test.png", "label": 0}]).to_csv(csv_path, index=False)
 
     ds = ISICDataset(csv_path=str(csv_path), images_root=str(tmp_path))
     x, y, meta = ds[0]

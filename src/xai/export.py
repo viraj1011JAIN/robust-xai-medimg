@@ -59,9 +59,7 @@ def load_npy(path: Path | str) -> np.ndarray:  # pragma: no cover
     return np.load(str(path))
 
 
-def save_heatmap(
-    hm: np.ndarray | torch.Tensor, path: Path | str
-) -> Path:  # pragma: no cover
+def save_heatmap(hm: np.ndarray | torch.Tensor, path: Path | str) -> Path:  # pragma: no cover
     path = Path(path)
     ensure_dir(path.parent)
 
@@ -222,9 +220,7 @@ def save_gradcam_png(model: nn.Module, x: torch.Tensor, out_path: Path) -> None:
 
     _, _, H, W = x.shape
     # Always resize to remove a branch from coverage accounting.
-    h = F.interpolate(
-        h.unsqueeze(0), size=(H, W), mode="bilinear", align_corners=False
-    ).squeeze(0)
+    h = F.interpolate(h.unsqueeze(0), size=(H, W), mode="bilinear", align_corners=False).squeeze(0)
 
     h2d = h.squeeze(0)
     h2d = h2d - h2d.min()

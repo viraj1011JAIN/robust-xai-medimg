@@ -58,9 +58,7 @@ def build_model(
     name = (name or "mlp").lower()
 
     if name == "mlp":
-        return TinyMLP(
-            in_ch=in_ch, img_size=img_size, hidden=hidden, num_classes=out_ch
-        )
+        return TinyMLP(in_ch=in_ch, img_size=img_size, hidden=hidden, num_classes=out_ch)
 
     if name == "resnet18":
         try:
@@ -68,19 +66,13 @@ def build_model(
 
             m = resnet18(weights=None)
             if in_ch != 3:
-                m.conv1 = nn.Conv2d(
-                    in_ch, 64, kernel_size=7, stride=2, padding=3, bias=False
-                )
-                nn.init.kaiming_normal_(
-                    m.conv1.weight, mode="fan_out", nonlinearity="relu"
-                )
+                m.conv1 = nn.Conv2d(in_ch, 64, kernel_size=7, stride=2, padding=3, bias=False)
+                nn.init.kaiming_normal_(m.conv1.weight, mode="fan_out", nonlinearity="relu")
             if out_ch != 1000:
                 m.fc = nn.Linear(m.fc.in_features, out_ch)
             return m
         except Exception as e:
-            raise RuntimeError(
-                "torchvision not available or failed to import resnet18"
-            ) from e
+            raise RuntimeError("torchvision not available or failed to import resnet18") from e
 
     if name == "resnet50":
         try:
@@ -88,19 +80,13 @@ def build_model(
 
             m = resnet50(weights=None)
             if in_ch != 3:
-                m.conv1 = nn.Conv2d(
-                    in_ch, 64, kernel_size=7, stride=2, padding=3, bias=False
-                )
-                nn.init.kaiming_normal_(
-                    m.conv1.weight, mode="fan_out", nonlinearity="relu"
-                )
+                m.conv1 = nn.Conv2d(in_ch, 64, kernel_size=7, stride=2, padding=3, bias=False)
+                nn.init.kaiming_normal_(m.conv1.weight, mode="fan_out", nonlinearity="relu")
             if out_ch != 1000:
                 m.fc = nn.Linear(m.fc.in_features, out_ch)
             return m
         except Exception as e:
-            raise RuntimeError(
-                "torchvision not available or failed to import resnet50"
-            ) from e
+            raise RuntimeError("torchvision not available or failed to import resnet50") from e
 
     if name == "vit_b16":
         try:
@@ -111,16 +97,12 @@ def build_model(
                 m.heads.head = nn.Linear(m.heads.head.in_features, out_ch)
             return m
         except Exception as e:
-            raise RuntimeError(
-                "torchvision ViT not available; use 'mlp' for smoke."
-            ) from e
+            raise RuntimeError("torchvision ViT not available; use 'mlp' for smoke.") from e
 
     raise ValueError(f"Unknown model name: {name!r}")
 
 
-def train_step(
-    model: nn.Module, x: torch.Tensor, y: torch.Tensor
-) -> Tuple[torch.Tensor, float]:
+def train_step(model: nn.Module, x: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, float]:
     model.train(True)
     opt = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.0)
     loss_fn = nn.CrossEntropyLoss()

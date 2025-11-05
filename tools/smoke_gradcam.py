@@ -11,9 +11,7 @@ from torchvision.models import ResNet18_Weights, resnet18
 def pick_device(requested: str | None) -> str:
     if requested:
         if requested == "cuda" and not torch.cuda.is_available():
-            print(
-                "Requested CUDA but PyTorch was built without CUDA; falling back to CPU."
-            )
+            print("Requested CUDA but PyTorch was built without CUDA; falling back to CPU.")
             return "cpu"
         return requested
     return "cuda" if torch.cuda.is_available() else "cpu"

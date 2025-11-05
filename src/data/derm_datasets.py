@@ -41,9 +41,7 @@ def derm_val(img_size: int):  # pragma: no cover - used indirectly by tests
         with Image.fromarray(image) as im:
             im = im.resize((img_size, img_size), Image.BILINEAR)
             arr = np.array(im)
-        return {
-            "image": torch.from_numpy(arr).permute(2, 0, 1).contiguous().float() / 255.0
-        }
+        return {"image": torch.from_numpy(arr).permute(2, 0, 1).contiguous().float() / 255.0}
 
     return _t
 
@@ -140,9 +138,7 @@ class ISICDataset(Dataset):
             "center": str(row.get("center")) if "center" in self.df.columns else "",
             "age": str(row.get("age")) if "age" in self.df.columns else "",
             "sex": str(row.get("sex")) if "sex" in self.df.columns else "",
-            "location": (
-                str(row.get("location")) if "location" in self.df.columns else ""
-            ),
+            "location": (str(row.get("location")) if "location" in self.df.columns else ""),
             "image": img_rel,
         }
         # Normalize NaN-like string to empty for stable tests

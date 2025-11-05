@@ -70,9 +70,7 @@ def cxr_val(img_size: int = 224) -> A.Compose:
     return A.Compose(
         [
             A.LongestMaxSize(max_size=int(img_size * 1.15)),
-            A.PadIfNeeded(
-                min_height=img_size, min_width=img_size, border_mode=0, value=0
-            ),
+            A.PadIfNeeded(min_height=img_size, min_width=img_size, border_mode=0, value=0),
             A.CenterCrop(height=img_size, width=img_size),
             A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
             ToTensorV2(),
@@ -99,9 +97,7 @@ def derm_train(img_size: int = 224) -> A.Compose:
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.Rotate(limit=15, border_mode=0, p=0.5),
-            A.ColorJitter(
-                brightness=0.1, contrast=0.1, saturation=0.05, hue=0.02, p=0.2
-            ),
+            A.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.05, hue=0.02, p=0.2),
             A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
             ToTensorV2(),
         ]
@@ -124,9 +120,7 @@ def derm_val(img_size: int = 224) -> A.Compose:
     return A.Compose(
         [
             A.LongestMaxSize(max_size=int(img_size * 1.15)),
-            A.PadIfNeeded(
-                min_height=img_size, min_width=img_size, border_mode=0, value=0
-            ),
+            A.PadIfNeeded(min_height=img_size, min_width=img_size, border_mode=0, value=0),
             A.CenterCrop(height=img_size, width=img_size),
             A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
             ToTensorV2(),
@@ -185,9 +179,7 @@ def build_transforms(
 
     # Validate split
     if s not in {"train", "val", "test"}:
-        raise ValueError(
-            f"Unknown split: {split!r}. Must be 'train', 'val', or 'test'."
-        )
+        raise ValueError(f"Unknown split: {split!r}. Must be 'train', 'val', or 'test'.")
 
     # Select appropriate pipeline
     if d == "cxr":

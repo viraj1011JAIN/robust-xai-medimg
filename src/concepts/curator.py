@@ -10,9 +10,7 @@ POS, NEG = "pos", "neg"
 
 
 class ConceptCurator:
-    def __init__(
-        self, dataset_csv: str, images_root: str, out_root: str, seed: int = 42
-    ):
+    def __init__(self, dataset_csv: str, images_root: str, out_root: str, seed: int = 42):
         self.df = pd.read_csv(dataset_csv)
         self.images_root = images_root
         self.out_root = out_root

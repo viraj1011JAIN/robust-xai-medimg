@@ -38,9 +38,7 @@ def test_nih_transform_ndarray_channels_first(tmp_path):
 
     # Assertions: tensor returned, channels-first, float dtype in [0,1]
     assert isinstance(x, torch.Tensor)
-    assert (
-        x.ndim == 3 and x.shape[0] == 3 and x.shape[1] == img_h and x.shape[2] == img_w
-    )
+    assert x.ndim == 3 and x.shape[0] == 3 and x.shape[1] == img_h and x.shape[2] == img_w
     assert x.dtype.is_floating_point
     assert torch.all(x >= 0) and torch.all(x <= 1)
     assert y.shape[-1] == 1  # one class

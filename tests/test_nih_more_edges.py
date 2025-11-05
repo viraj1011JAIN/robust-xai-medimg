@@ -27,9 +27,7 @@ def test_nih_transform_dict_branch_and_meta(tmp_path):
     """Test NIH dataset with dict-returning transform."""
     # Create test image
     imgp = tmp_path / "x.png"
-    Image.fromarray((np.random.rand(16, 16) * 255).astype("uint8")).convert("L").save(
-        imgp
-    )
+    Image.fromarray((np.random.rand(16, 16) * 255).astype("uint8")).convert("L").save(imgp)
 
     # Create CSV
     csv = tmp_path / "nih.csv"
@@ -65,9 +63,7 @@ def test_nih_transform_dict_branch_and_meta(tmp_path):
 def test_nih_with_none_transform(tmp_path):
     """Test NIH dataset with None transform."""
     imgp = tmp_path / "y.png"
-    Image.fromarray((np.random.rand(16, 16) * 255).astype("uint8")).convert("L").save(
-        imgp
-    )
+    Image.fromarray((np.random.rand(16, 16) * 255).astype("uint8")).convert("L").save(imgp)
 
     csv = tmp_path / "nih2.csv"
     pd.DataFrame(

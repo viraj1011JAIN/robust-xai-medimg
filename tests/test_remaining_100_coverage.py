@@ -280,9 +280,7 @@ def test_isic_dataset_partial_metadata(tmp_path):
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["image_path", "label", "age", "sex"])
         writer.writeheader()
-        writer.writerow(
-            {"image_path": "img.png", "label": "1.0", "age": "45", "sex": "M"}
-        )
+        writer.writerow({"image_path": "img.png", "label": "1.0", "age": "45", "sex": "M"})
 
     img_path = tmp_path / "img.png"
     Image.new("RGB", (64, 64), color=(100, 100, 100)).save(img_path)

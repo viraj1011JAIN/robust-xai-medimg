@@ -25,17 +25,11 @@ def main():
     ap = argparse.ArgumentParser(
         description="Merge two robustness CSVs and write a markdown comparison."
     )
-    ap.add_argument(
-        "--base", required=True, help="CSV from model A (e.g., best.pt sweep)"
-    )
-    ap.add_argument(
-        "--tri", required=True, help="CSV from model B (e.g., last.pt sweep)"
-    )
+    ap.add_argument("--base", required=True, help="CSV from model A (e.g., best.pt sweep)")
+    ap.add_argument("--tri", required=True, help="CSV from model B (e.g., last.pt sweep)")
     ap.add_argument("--out", required=True, help="Output markdown path")
     ap.add_argument("--title", default="Robustness compare", help="Markdown title")
-    ap.add_argument(
-        "--ascii", action="store_true", help="Use ASCII column names (no Δ)"
-    )
+    ap.add_argument("--ascii", action="store_true", help="Use ASCII column names (no Δ)")
     ap.add_argument(
         "--round",
         dest="round_ndigits",

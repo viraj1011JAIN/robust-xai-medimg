@@ -165,6 +165,4 @@ def test_cxr_invalid_csv_raises(tmp_path):
     pd.DataFrame([{"wrong": "columns"}]).to_csv(csv_path, index=False)
 
     with pytest.raises(ValueError):
-        C.NIHChestXray(
-            str(csv_path), str(tmp_path), target_cols=["Atelectasis"], transform=None
-        )
+        C.NIHChestXray(str(csv_path), str(tmp_path), target_cols=["Atelectasis"], transform=None)

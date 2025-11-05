@@ -54,9 +54,7 @@ def test_pgd_with_label_indices():
     x = torch.rand(2, 3, 8, 8)
     y = torch.tensor([0, 1])  # Label indices
 
-    x_adv = pgd.pgd_attack(
-        model, x, y, eps=4 / 255, alpha=1 / 255, steps=5, random_start=False
-    )
+    x_adv = pgd.pgd_attack(model, x, y, eps=4 / 255, alpha=1 / 255, steps=5, random_start=False)
 
     assert x_adv.shape == x.shape, "Shape should be preserved"
     assert not torch.equal(x_adv, x), "Should create perturbation"

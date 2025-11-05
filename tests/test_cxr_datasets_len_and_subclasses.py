@@ -30,9 +30,7 @@ def test_cxrbase_len_and_getitem(tmp_path):
     img = tmp_path / "imgs" / "a.png"
     _mk_img(img)
     csv = tmp_path / "data.csv"
-    pd.DataFrame({"image_path": ["imgs/a.png"], "A": [1], "B": [0]}).to_csv(
-        csv, index=False
-    )
+    pd.DataFrame({"image_path": ["imgs/a.png"], "A": [1], "B": [0]}).to_csv(csv, index=False)
 
     ds = cls(
         csv_path=str(csv),

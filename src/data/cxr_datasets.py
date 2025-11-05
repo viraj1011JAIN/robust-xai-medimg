@@ -23,9 +23,7 @@ def _albumentations_like_call(transform, img_hwc_uint8: np.ndarray):
     """Try Albumentations-style first, else positional. Returns dict or array/tensor."""
     try:
         return transform(image=img_hwc_uint8)
-    except (
-        TypeError
-    ):  # pragma: no cover (tests always accept positional or dict['image'])
+    except TypeError:  # pragma: no cover (tests always accept positional or dict['image'])
         return transform(img_hwc_uint8)
 
 
