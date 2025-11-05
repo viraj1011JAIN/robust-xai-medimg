@@ -1,0 +1,7 @@
+pre-commit
+black==24.8.0
+isort==5.13.2
+flake8==7.1.0
+pytest
+pytest-cov
+pip-tools<7.5   # stays compatible with your current pip 24.x
