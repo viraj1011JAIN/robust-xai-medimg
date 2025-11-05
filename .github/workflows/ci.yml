@@ -1,87 +1,23 @@
-name: CI
+﻿name: CI
 
 on:
   push:
-    branches: [ main ]
   pull_request:
 
 jobs:
-  lint:
-    name: Lint (Windows)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~\AppData\Local\pip\Cache
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dev linters
-        run: |
-          python -m pip install -U pip
-          pip install -r requirements-dev.txt
-
-      - name: Run linters (black + isort + flake8)
-        run: |
-          python -m black --check .
-          python -m isort --check-only .
-          python -m flake8
-
-  sanity:
-    name: Sanity & Grad-CAM (Ubuntu)
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('constraints.txt', 'requirements.freeze.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install frozen deps (headless OpenCV)
-        run: |
-          python -m pip install -U pip wheel
-          pip install -r requirements.freeze.txt -c constraints.txt
-          pip install --no-deps "git+https://github.com/jacobgil/pytorch-grad-cam.git"
-
-      - name: Sanity check (NumPy/SciPy/OpenCV headless)
-        shell: python
-        run: |
-          from importlib.metadata import version, PackageNotFoundError
-          import numpy, scipy, cv2
-          def has(n):
-              try: version(n); return True
-              except PackageNotFoundError: return False
-          print("NumPy", numpy.__version__)
-          print("SciPy", scipy.__version__)
-          print("cv2 path:", cv2.__file__)
-          headless = has("opencv-python-headless") and not has("opencv-python") and not has("opencv-contrib-python")
-          print("OpenCV headless:", headless)
-
-      - name: Grad-CAM smoke (CPU)
-        run: |
-          python tools/smoke_gradcam.py --device cpu
-
-      - name: Upload smoke artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradcam_smoke
-          path: gradcam_smoke.png
+          python-version: '3.10'
+      - run: pip install --upgrade pip
+      - run: pip install pre-commit pytest pytest-cov
+      # If you have requirements.txt / pyproject, install your deps here:
+      # - run: pip install -r requirements.txt
+      - run: pre-commit run --all-files
+      - run: |
+          pytest -q --disable-warnings 
+            --cov=src.data --cov=src.xai --cov-branch 
+            --cov-report=xml --cov-fail-under=100
