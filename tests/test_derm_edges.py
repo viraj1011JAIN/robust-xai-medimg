@@ -4,8 +4,7 @@ import pandas as pd
 import torch
 from PIL import Image
 
-from src.data.derm_datasets import \
-    ISICDataset  # adjust if your class name differs
+from src.data.derm_datasets import ISICDataset  # adjust if your class name differs
 
 
 def test_isic_none_transform_and_tensor(tmp_path):
@@ -61,9 +60,7 @@ def test_isic_transform_dict_and_bad_row_fields(tmp_path):
         t = torch.from_numpy(arr).permute(2, 0, 1).contiguous()
         return {"image": t}
 
-    ds = ISICDataset(
-        csv_path=str(csv), images_root=str(tmp_path), transform=_tfm, uncertain_to=0
-    )
+    ds = ISICDataset(csv_path=str(csv), images_root=str(tmp_path), transform=_tfm, uncertain_to=0)
     x, y, meta = ds[0]
     assert isinstance(x, torch.Tensor) and x.shape[0] == 3
     assert int(y) in (0, 1)  # -1 remapped or coerced path exercised

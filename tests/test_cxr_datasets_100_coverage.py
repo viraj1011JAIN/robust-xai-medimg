@@ -8,10 +8,15 @@ import pytest
 import torch
 from PIL import Image
 
-from src.data.cxr_datasets import (NIHChestXray, PadChestCXRBase, VinDrCXRBase,
-                                   _albumentations_like_call, _CXRBase,
-                                   _read_rgb_or_placeholder,
-                                   _to_chw_float_tensor)
+from src.data.cxr_datasets import (
+    NIHChestXray,
+    PadChestCXRBase,
+    VinDrCXRBase,
+    _albumentations_like_call,
+    _CXRBase,
+    _read_rgb_or_placeholder,
+    _to_chw_float_tensor,
+)
 
 # ============================================================================
 # Test _read_rgb_or_placeholder - Line 40-49 coverage
@@ -323,9 +328,7 @@ def test_vindrcxr_auto_target_selection(tmp_path):
     img_array = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
     Image.fromarray(img_array).save(tmp_path / "img1.png")
 
-    dataset = VinDrCXRBase(
-        csv_path=str(csv_path), images_root=str(tmp_path), target_cols=None
-    )
+    dataset = VinDrCXRBase(csv_path=str(csv_path), images_root=str(tmp_path), target_cols=None)
 
     assert "Atelectasis" in dataset.target_cols
     assert "Mass" in dataset.target_cols
@@ -375,9 +378,7 @@ def test_transform_with_positional_only_interface(sample_dataset_files):
 def test_cxr_base_nan_handling(tmp_path):
     """Verify NaN values in target columns are filled with 0."""
     csv_path = tmp_path / "data.csv"
-    df = pd.DataFrame(
-        {"image_path": ["img1.png"], "Pneumonia": [np.nan], "Edema": [1.0]}
-    )
+    df = pd.DataFrame({"image_path": ["img1.png"], "Pneumonia": [np.nan], "Edema": [1.0]})
     df.to_csv(csv_path, index=False)
 
     img_array = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
@@ -406,6 +407,4 @@ def test_dataset_length(sample_dataset_files):
 
 
 if __name__ == "__main__":
-    pytest.main(
-        [__file__, "-v", "--cov=src.data.cxr_datasets", "--cov-report=term-missing"]
-    )
+    pytest.main([__file__, "-v", "--cov=src.data.cxr_datasets", "--cov-report=term-missing"])

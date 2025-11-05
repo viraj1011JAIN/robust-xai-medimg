@@ -8,8 +8,7 @@ import pytest
 import torch
 from PIL import Image
 
-from src.data.derm_datasets import (ISICDataset, _read_rgb_or_placeholder,
-                                    _to_chw_float01)
+from src.data.derm_datasets import ISICDataset, _read_rgb_or_placeholder, _to_chw_float01
 
 # ============================================================================
 # Line 79-80: TypeError for transform returning Tensor with unexpected shape
@@ -37,9 +36,7 @@ def test_isic_transform_tensor_unexpected_shape(tmp_path):
         csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
     )
 
-    with pytest.raises(
-        TypeError, match="Transform returned Tensor with unexpected shape"
-    ):
+    with pytest.raises(TypeError, match="Transform returned Tensor with unexpected shape"):
         _ = dataset[0]
 
 
@@ -64,9 +61,7 @@ def test_isic_transform_tensor_wrong_channel_count(tmp_path):
         csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
     )
 
-    with pytest.raises(
-        TypeError, match="Transform returned Tensor with unexpected shape"
-    ):
+    with pytest.raises(TypeError, match="Transform returned Tensor with unexpected shape"):
         _ = dataset[0]
 
 
@@ -96,9 +91,7 @@ def test_isic_transform_ndarray_unexpected_shape(tmp_path):
         csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
     )
 
-    with pytest.raises(
-        TypeError, match="Transform returned ndarray with unexpected shape"
-    ):
+    with pytest.raises(TypeError, match="Transform returned ndarray with unexpected shape"):
         _ = dataset[0]
 
 
@@ -123,9 +116,7 @@ def test_isic_transform_ndarray_4d(tmp_path):
         csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
     )
 
-    with pytest.raises(
-        TypeError, match="Transform returned ndarray with unexpected shape"
-    ):
+    with pytest.raises(TypeError, match="Transform returned ndarray with unexpected shape"):
         _ = dataset[0]
 
 
@@ -168,9 +159,7 @@ def test_isic_partial_metadata_columns(tmp_path):
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["image_path", "label", "age", "sex"])
         writer.writeheader()
-        writer.writerow(
-            {"image_path": "img1.png", "label": "1.0", "age": "45", "sex": "M"}
-        )
+        writer.writerow({"image_path": "img1.png", "label": "1.0", "age": "45", "sex": "M"})
 
     img_path = tmp_path / "img1.png"
     img = Image.new("RGB", (64, 64), color=(255, 0, 0))
@@ -241,17 +230,13 @@ def test_isic_uncertain_label_mapping(tmp_path):
     img.save(img_path)
 
     # Test with uncertain_to=0
-    dataset = ISICDataset(
-        csv_path=str(csv_path), images_root=str(tmp_path), uncertain_to=0
-    )
+    dataset = ISICDataset(csv_path=str(csv_path), images_root=str(tmp_path), uncertain_to=0)
 
     x, y, meta = dataset[0]
     assert y.item() == 0.0
 
     # Test with uncertain_to=1
-    dataset2 = ISICDataset(
-        csv_path=str(csv_path), images_root=str(tmp_path), uncertain_to=1
-    )
+    dataset2 = ISICDataset(csv_path=str(csv_path), images_root=str(tmp_path), uncertain_to=1)
 
     x2, y2, meta2 = dataset2[0]
     assert y2.item() == 1.0
@@ -338,9 +323,7 @@ def test_isic_transform_direct_tensor_wrong_shape(tmp_path):
         csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
     )
 
-    with pytest.raises(
-        TypeError, match="Transform returned Tensor with unexpected shape"
-    ):
+    with pytest.raises(TypeError, match="Transform returned Tensor with unexpected shape"):
         _ = dataset[0]
 
 
@@ -364,9 +347,7 @@ def test_isic_transform_direct_ndarray_wrong_shape(tmp_path):
         csv_path=str(csv_path), images_root=str(tmp_path), transform=bad_transform
     )
 
-    with pytest.raises(
-        TypeError, match="Transform returned ndarray with unexpected shape"
-    ):
+    with pytest.raises(TypeError, match="Transform returned ndarray with unexpected shape"):
         _ = dataset[0]
 
 
@@ -394,9 +375,7 @@ def test_isic_custom_target_col(tmp_path):
     img = Image.new("RGB", (64, 64), color=(255, 0, 0))
     img.save(img_path)
 
-    dataset = ISICDataset(
-        csv_path=str(csv_path), images_root=str(tmp_path), target_col="diagnosis"
-    )
+    dataset = ISICDataset(csv_path=str(csv_path), images_root=str(tmp_path), target_col="diagnosis")
 
     x, y, meta = dataset[0]
     assert y.item() == 1.0
