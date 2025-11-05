@@ -4,23 +4,58 @@ on:
   push:
   pull_request:
 
+# Cancel older runs of the same branch/PR if a new push arrives
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-      - run: pip install --upgrade pip
-      - run: |
+          python-version: "3.10"
+          cache: "pip"   # enable pip caching for faster installs
+
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
+      - name: Install PyTorch CPU wheels
+        run: |
           pip install --index-url https://download.pytorch.org/whl/cpu \
             torch==2.9.0+cpu torchvision==0.24.0+cpu torchaudio==2.9.0+cpu
-      - run: pip install -r requirements.txt -r dev-requirements.txt
-      - run: pre-commit run --all-files
-      - run: |
+
+      - name: Install project + dev requirements
+        run: pip install -r requirements.txt -r dev-requirements.txt
+
+      - name: Run pre-commit (format + lint)
+        run: pre-commit run --all-files
+
+      - name: Run tests with 100% coverage gate
+        run: |
           pytest -q --disable-warnings \
             --cov=src.data --cov=src.xai --cov-branch \
             --cov-config=.coveragerc_phase1 \
             --cov-report=xml --cov-report=term-missing:skip-covered \
             --cov-fail-under=100
+            
+        - run: pip install -r requirements.txt -r dev-requirements.txt -c constraints.txt
+
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/
+ 
