@@ -1,0 +1,12 @@
+[flake8]
+# Be compatible with typical Python projects and reduce noisy warnings
+max-line-length = 120
+extend-ignore = E203, W503
+
+# Tests often import helpers or create dummy vars; allow that there.
+per-file-ignores =
+    tests/*.py: F401,F841,E501
+
+# These two source files contain long HTML/strings that aren't worth hard-wraps
+    src/eval/robust_report_html.py: E501
+    src/train/baseline.py: E501

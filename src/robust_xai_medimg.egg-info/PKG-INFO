@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: robust-xai-medimg
+Version: 0.1.0
+Summary: Adversarially robust and concept-grounded XAI for medical imaging
+Requires-Python: >=3.10
+License-File: LICENSE
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary

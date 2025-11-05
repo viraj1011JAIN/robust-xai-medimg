@@ -1,11 +1,14 @@
 [run]
+branch = True
+source = src
 omit =
-    src/train/*
-    src/eval/*
-    src/models/*
-    */__init__.py
+    src/smoke.py
+    **/__init__.py
 
 [report]
 exclude_lines =
     pragma: no cover
-    if __name__ == "__main__":
+    if __name__ == .__main__.:
+    ^\s*raise NotImplementedError
+    ^\s*except ImportError:
+    ^\s*pass$

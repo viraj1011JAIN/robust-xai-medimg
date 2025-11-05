@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+﻿# src/data/transforms.py
+"""
+Transform pipelines for CXR and dermatology images using Albumentations.
+All pipelines normalize by ImageNet statistics and return PyTorch tensors.
+"""
+from __future__ import annotations
 
 from typing import Literal
 
@@ -25,10 +30,19 @@ __all__ = [
 # -----------------------------
 
 
-def cxr_train(img_size: int = 224) -> A.BasicTransform:
+def cxr_train(img_size: int = 224) -> A.Compose:
     """
-    CXR training augments.
-    Conservative geometry, no color jitter (CXRs are effectively grayscale).
+    CXR training augmentations.
+
+    Conservative geometry transformations without color jitter
+    (chest X-rays are effectively grayscale).
+
+    Args:
+        img_size: Target image size (height and width)
+
+    Returns:
+        Albumentations Compose pipeline that expects HWC uint8 and
+        returns CHW float32 tensor normalized by ImageNet stats
     """
     return A.Compose(
         [
@@ -40,9 +54,18 @@ def cxr_train(img_size: int = 224) -> A.BasicTransform:
     )
 
 
-def cxr_val(img_size: int = 224) -> A.BasicTransform:
+def cxr_val(img_size: int = 224) -> A.Compose:
     """
-    Deterministic CXR validation pipeline.
+    Deterministic CXR validation/test pipeline.
+
+    Resizes to fit within img_size, pads if needed, then center crops.
+    No random augmentations for reproducible validation.
+
+    Args:
+        img_size: Target image size (height and width)
+
+    Returns:
+        Albumentations Compose pipeline for validation/test
     """
     return A.Compose(
         [
@@ -57,10 +80,18 @@ def cxr_val(img_size: int = 224) -> A.BasicTransform:
     )
 
 
-def derm_train(img_size: int = 224) -> A.BasicTransform:
+def derm_train(img_size: int = 224) -> A.Compose:
     """
-    Dermatoscopic image training augments.
-    Slightly richer geometry & mild color jitter, still safe for medical images.
+    Dermatoscopic image training augmentations.
+
+    Includes richer geometric transforms and mild color jitter
+    while remaining safe for medical imaging.
+
+    Args:
+        img_size: Target image size (height and width)
+
+    Returns:
+        Albumentations Compose pipeline for training
     """
     return A.Compose(
         [
@@ -77,9 +108,18 @@ def derm_train(img_size: int = 224) -> A.BasicTransform:
     )
 
 
-def derm_val(img_size: int = 224) -> A.BasicTransform:
+def derm_val(img_size: int = 224) -> A.Compose:
     """
-    Deterministic Derm validation pipeline.
+    Deterministic dermatology validation/test pipeline.
+
+    Resizes to fit within img_size, pads if needed, then center crops.
+    No random augmentations for reproducible validation.
+
+    Args:
+        img_size: Target image size (height and width)
+
+    Returns:
+        Albumentations Compose pipeline for validation/test
     """
     return A.Compose(
         [
@@ -95,7 +135,7 @@ def derm_val(img_size: int = 224) -> A.BasicTransform:
 
 
 # -----------------------------
-# Factory expected by tests
+# Factory function for tests
 # -----------------------------
 
 
@@ -104,24 +144,52 @@ def build_transforms(
     domain: Literal["cxr", "derm"],
     split: Literal["train", "val", "test"],
     size: int = 224,
-) -> A.BasicTransform:
+) -> A.Compose:
     """
-    Return an Albumentations Compose that:
-      - accepts {"image": HxWxC uint8}
-      - returns {"image": Tensor[C,H,W]} normalized by ImageNet stats
-      - train pipelines include random ops; val/test are deterministic
+    Factory function to build transform pipelines.
 
-    Notes:
-      - Tests only require correct shape (3, size, size) and normalized ranges;
-        ImageNet normalization ensures outputs lie well within [-5, 5].
+    Returns an Albumentations Compose pipeline based on domain and split:
+      - Accepts dict with key "image" containing HxWxC uint8 numpy array
+      - Returns dict with key "image" containing CxHxW float32 tensor
+      - Normalizes using ImageNet statistics
+      - Training splits use random augmentations
+      - Validation and test splits are deterministic
+
+    Args:
+        domain: Medical imaging domain ('cxr' or 'derm')
+        split: Data split ('train', 'val', or 'test')
+        size: Target image size (default: 224)
+
+    Returns:
+        Albumentations Compose pipeline
+
+    Raises:
+        ValueError: If domain is not 'cxr' or 'derm'
+        ValueError: If split is not 'train', 'val', or 'test'
+
+    Examples:
+        >>> tfm = build_transforms(domain="cxr", split="train", size=224)
+        >>> img = np.random.randint(0, 255, (256, 256, 3), dtype=np.uint8)
+        >>> result = tfm(image=img)
+        >>> result["image"].shape  # torch.Size([3, 224, 224])
+
+        >>> val_tfm = build_transforms(domain="derm", split="val")
+        >>> # Deterministic validation transform
     """
     d = domain.lower()
     s = split.lower()
-    if d not in {"cxr", "derm"}:
-        raise ValueError(f"Unknown domain: {domain!r}")
-    if s not in {"train", "val", "test"}:
-        raise ValueError(f"Unknown split: {split!r}")
 
+    # Validate domain
+    if d not in {"cxr", "derm"}:
+        raise ValueError(f"Unknown domain: {domain!r}. Must be 'cxr' or 'derm'.")
+
+    # Validate split
+    if s not in {"train", "val", "test"}:
+        raise ValueError(
+            f"Unknown split: {split!r}. Must be 'train', 'val', or 'test'."
+        )
+
+    # Select appropriate pipeline
     if d == "cxr":
         return cxr_train(size) if s == "train" else cxr_val(size)
     else:  # derm
