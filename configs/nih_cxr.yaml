@@ -1,0 +1,22 @@
+name: NIH_CXR14
+root: data/raw/NIH_CXR
+split_csv: data/processed/splits/nih_splits.csv
+img_size: [320, 320]
+normalize_mean: [0.485, 0.456, 0.406]
+normalize_std:  [0.229, 0.224, 0.225]
+multi_label: true
+classes:
+  - Atelectasis
+  - Cardiomegaly
+  - Effusion
+  - Infiltration
+  - Mass
+  - Nodule
+  - Pneumonia
+  - Pneumothorax
+  - Consolidation
+  - Edema
+  - Emphysema
+  - Fibrosis
+  - Pleural_Thickening
+  - Hernia
