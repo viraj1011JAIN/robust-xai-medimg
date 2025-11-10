@@ -6,14 +6,14 @@ stages:
     deps:
     - path: data\raw\NIH_CXR
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: b614b2c1a3fb628436d8708b2ae72d17.dir
+      size: 98483959010
+      nfiles: 262587
     - path: data\raw\PadChest
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: 13dd7eb1de21a0ef4e14733abc0d6fe7.dir
+      size: 525111099
+      nfiles: 52
     - path: scripts\preprocess_cxr.py
       hash: md5
       md5: 2e7872b2c3e1f97236856080dec1fc39
@@ -21,6 +21,6 @@ stages:
     outs:
     - path: data\processed\cxr
       hash: md5
-      md5: 9bc50517bb73235417d5fce0ad177353.dir
-      size: 305
+      md5: 5b100928039c3fa9e8d9d45e7b70f1ab.dir
+      size: 246
       nfiles: 2
