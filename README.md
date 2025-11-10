@@ -43,3 +43,4 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 # Quick start: uses the newest checkpoint it finds in results\checkpoints
 powershell -ExecutionPolicy Bypass -File tools\run_debug_sweeps.ps1
 
+![CI](https://github.com/viraj1011JAIN/robust-xai-medimg/actions/workflows/ci.yml/badge.svg)

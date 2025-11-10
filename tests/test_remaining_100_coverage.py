@@ -52,7 +52,7 @@ def test_make_gc_positional_only():
 
 
 def test_run_generate_callable_returns_non_tensor_then_fallback():
-    """Test _run_generate when callable returns non-Tensor, falls back to gradcam.gradcam - Lines 183->180."""
+    """Test _run_generate when callable returns non-Tensor, falls back to gradcam.gradcam - Lines 183->180."""  # noqa: E501
     x = torch.randn(1, 3, 224, 224)
     expected_result = torch.randn(1, 224, 224)
 

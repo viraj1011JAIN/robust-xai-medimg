@@ -1,23 +1,113 @@
-﻿from __future__ import annotations
+﻿"""Model building utilities with timm support."""
+from __future__ import annotations
 
-import timm
+import torch
+import torch.nn as nn
 
-from .hooks import FeatureExtractor
+try:
+    import timm
+    TIMM_AVAILABLE = True
+except ImportError:
+    TIMM_AVAILABLE = False
+    timm = None
 
 
-def build_model(arch: str = "resnet50", num_classes: int = 1, pretrained: bool = True):
-    model = timm.create_model(arch, pretrained=pretrained, num_classes=num_classes)
-    if arch.startswith("resnet"):
-        target = model.layer4
-    elif arch.startswith("efficientnet_b0"):
-        target = model.conv_head
-    elif arch in (
-        "vit_base_patch16_224",
-        "vit_base_patch16_384",
-        "vit_base_patch16_224.augreg_in21k",
-    ):
-        target = model.blocks[-1].norm1
-    else:
-        target = list(model.children())[-1]
-    hook = FeatureExtractor(target)
-    return model, hook
+class FeatureExtractor:
+    """Hook to capture intermediate features from a model."""
+    
+    def __init__(self):
+        self.features = None
+        self.hook = None
+    
+    def __call__(self, module, input, output):
+        self.features = output.detach()
+    
+    def attach(self, model, layer_name='layer4'):
+        """Attach hook to specified layer."""
+        for name, module in model.named_modules():
+            if name == layer_name:
+                self.hook = module.register_forward_hook(self)
+                return
+        raise ValueError(f"Layer {layer_name} not found in model")
+    
+    def detach(self):
+        """Remove the hook."""
+        if self.hook is not None:
+            self.hook.remove()
+            self.hook = None
+
+
+def build_model(
+    architecture: str,
+    num_classes: int = 1,
+    pretrained: bool = False,
+    **kwargs
+) -> nn.Module:
+    """
+    Build a model using timm library.
+    
+    Args:
+        architecture: Model architecture name (e.g., 'resnet18', 'efficientnet_b0')
+        num_classes: Number of output classes
+        pretrained: Whether to load pretrained weights
+        **kwargs: Additional arguments passed to timm.create_model
+    
+    Returns:
+        PyTorch model ready for training/inference
+    
+    Raises:
+        ImportError: If timm is not installed
+        ValueError: If architecture is not supported
+    """
+    if not TIMM_AVAILABLE:
+        raise ImportError(
+            "timm library is required for model building. "
+            "Install with: pip install timm"
+        )
+    
+    architecture = architecture.lower()
+    
+    # Map common names
+    arch_map = {
+        'resnet18': 'resnet18',
+        'resnet34': 'resnet34',
+        'resnet50': 'resnet50',
+        'efficientnet_b0': 'efficientnet_b0',
+        'efficientnet_b1': 'efficientnet_b1',
+        'vit_base_patch16_224': 'vit_base_patch16_224',
+        'vit_small_patch16_224': 'vit_small_patch16_224',
+    }
+    
+    if architecture not in arch_map:
+        raise ValueError(
+            f"Architecture '{architecture}' not supported. "
+            f"Supported: {list(arch_map.keys())}"
+        )
+    
+    timm_name = arch_map[architecture]
+    
+    try:
+        # Create model with timm
+        model = timm.create_model(
+            timm_name,
+            pretrained=pretrained,
+            num_classes=num_classes,
+            **kwargs
+        )
+    except Exception as e:
+        raise ValueError(f"Failed to create model '{architecture}': {e}")
+    
+    # Attach feature extractor for models with layer4 (ResNets)
+    if hasattr(model, 'layer4'):
+        feature_extractor = FeatureExtractor()
+        try:
+            feature_extractor.attach(model, 'layer4')
+            model.feature_extractor = feature_extractor
+        except ValueError:
+            # If layer4 doesn't exist, just skip
+            pass
+    
+    # Set to eval mode by default
+    model.eval()
+    
+    return model

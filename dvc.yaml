@@ -1,0 +1,10 @@
+stages:
+  preprocess_cxr:
+    cmd: python scripts\preprocess_cxr.py --nih data\raw\NIH_CXR --pad 
+      data\raw\PadChest --out data\processed\cxr
+    deps:
+    - data\raw\NIH_CXR
+    - data\raw\PadChest
+    - scripts\preprocess_cxr.py
+    outs:
+    - data\processed\cxr

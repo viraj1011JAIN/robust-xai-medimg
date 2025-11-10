@@ -1,0 +1,26 @@
+schema: '2.0'
+stages:
+  preprocess_cxr:
+    cmd: python scripts\preprocess_cxr.py --nih data\raw\NIH_CXR --pad 
+      data\raw\PadChest --out data\processed\cxr
+    deps:
+    - path: data\raw\NIH_CXR
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: data\raw\PadChest
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: scripts\preprocess_cxr.py
+      hash: md5
+      md5: 2e7872b2c3e1f97236856080dec1fc39
+      size: 771
+    outs:
+    - path: data\processed\cxr
+      hash: md5
+      md5: 9bc50517bb73235417d5fce0ad177353.dir
+      size: 305
+      nfiles: 2

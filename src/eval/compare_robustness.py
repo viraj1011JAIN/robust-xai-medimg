@@ -1,3 +1,6 @@
+# src/eval/compare_robustness.py
+from __future__ import annotations
+
 import argparse
 import os
 from typing import Tuple
@@ -48,6 +51,7 @@ def plot_delta_heatmap(both: pd.DataFrame, out_png: str) -> None:
     os.makedirs(os.path.dirname(out_png), exist_ok=True)
     plt.tight_layout()
     plt.savefig(out_png)
+    plt.close()  # free figure
 
 
 def plot_pgd10_lines(both: pd.DataFrame, out_png: str) -> None:
@@ -65,6 +69,7 @@ def plot_pgd10_lines(both: pd.DataFrame, out_png: str) -> None:
     os.makedirs(os.path.dirname(out_png), exist_ok=True)
     plt.tight_layout()
     plt.savefig(out_png)
+    plt.close()  # free figure
 
 
 def write_delta_table(both: pd.DataFrame, out_md: str) -> None:
@@ -107,5 +112,5 @@ def main() -> None:
     print("[saved] delta heatmap, PGD10 lines, and table in", args.outdir)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

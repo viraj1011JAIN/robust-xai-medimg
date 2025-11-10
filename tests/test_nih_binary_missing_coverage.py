@@ -19,7 +19,7 @@ from src.data.nih_binary import CSVImageDataset, NIHBinarizedDataset
 
 
 def test_nih_transform_returns_invalid_type(tmp_path):
-    """Test NIHBinarizedDataset raises TypeError when transform returns invalid type - Lines 162-163."""
+    """Test NIHBinarizedDataset raises TypeError when transform returns invalid type - Lines 162-163."""  # noqa: E501
     csv_path = tmp_path / "data.csv"
 
     with open(csv_path, "w", newline="") as f:

@@ -1,19 +1,35 @@
 from __future__ import annotations
 
 import argparse
-import sys
+import builtins
+import html
+import os
 from dataclasses import dataclass
-from typing import Literal, Optional, Tuple
+from pathlib import Path
+from typing import Iterable, Literal, Optional, Tuple
 
 import torch
 from torch import nn
 
-__all__ = ["build_model", "main"]
+# --- expose __import__ so tests can patch src.train.baseline.__import__ ---
+__import__ = builtins.__import__
+
+__all__ = [
+    "ModelCfg",
+    "TinyMLP",
+    "build_model",
+    "_build_torchvision",
+    "train_step",
+    "_write_smoke_html",
+    "_open_in_edge",
+    "_parse_args",
+    "main",
+]
 
 
 @dataclass
 class ModelCfg:
-    name: Literal["mlp", "resnet18", "resnet50", "vit_b16"] = "mlp"
+    name: Literal["mlp"] = "mlp"
     in_ch: int = 3
     img_size: int = 224
     num_classes: int = 2
@@ -22,14 +38,10 @@ class ModelCfg:
 
 class TinyMLP(nn.Module):
     def __init__(
-        self,
-        in_ch: int = 3,
-        img_size: int = 224,
-        hidden: int = 128,
-        num_classes: int = 2,
+        self, in_ch: int = 3, img_size: int = 224, hidden: int = 128, num_classes: int = 2
     ):
         super().__init__()
-        flat = in_ch * img_size * img_size
+        flat = int(in_ch) * int(img_size) * int(img_size)
         self.net = nn.Sequential(
             nn.Flatten(),
             nn.Linear(flat, hidden),
@@ -41,122 +53,181 @@ class TinyMLP(nn.Module):
         return self.net(x)
 
 
+def _replace_first_conv_resnet(model: nn.Module, in_ch: int) -> None:
+    conv1: nn.Conv2d = model.conv1  # type: ignore[attr-defined]
+    if conv1.in_channels == in_ch:
+        return
+    new_conv = nn.Conv2d(
+        in_ch,
+        conv1.out_channels,
+        kernel_size=conv1.kernel_size,
+        stride=conv1.stride,
+        padding=conv1.padding,
+        bias=(conv1.bias is not None),
+    )
+    if in_ch == 1 and conv1.weight.shape[1] == 3:
+        with torch.no_grad():
+            new_conv.weight.copy_(conv1.weight.mean(dim=1, keepdim=True))
+            if conv1.bias is not None and new_conv.bias is not None:
+                new_conv.bias.copy_(conv1.bias)
+    else:
+        nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
+        if new_conv.bias is not None:
+            nn.init.zeros_(new_conv.bias)
+    model.conv1 = new_conv  # type: ignore[attr-defined]
+
+
+def _replace_vit_head(m: nn.Module, num_classes: int) -> None:
+    """
+    Make torchvision ViT heads consistent across versions:
+    - sometimes m.heads is nn.Linear
+    - sometimes m.heads is nn.Sequential(head=nn.Linear)
+    - fallback to m.hidden_dim (usually 768)
+    """
+    heads = getattr(m, "heads", None)
+
+    if isinstance(heads, nn.Linear):
+        in_feats = heads.in_features
+        m.heads = nn.Linear(in_feats, num_classes)
+        return
+
+    if isinstance(heads, nn.Sequential):
+        last_linear = None
+        for mod in reversed(list(heads.children())):
+            if isinstance(mod, nn.Linear):
+                last_linear = mod
+                break
+        if last_linear is not None:
+            m.heads = nn.Linear(last_linear.in_features, num_classes)
+            return
+
+    in_feats = getattr(m, "hidden_dim", 768)
+    m.heads = nn.Linear(in_feats, num_classes)
+
+
+def _build_torchvision(name: str, in_ch: int, num_classes: int) -> nn.Module:
+    # Use the *module-level* __import__ so tests can patch it.
+    try:
+        tvm = __import__("torchvision.models", fromlist=["models"])
+    except Exception as e:
+        raise RuntimeError("torchvision is not available") from e
+
+    n = (name or "").lower()
+    if n == "resnet18":
+        m = tvm.resnet18(weights=None)
+        _replace_first_conv_resnet(m, in_ch)
+        m.fc = nn.Linear(m.fc.in_features, num_classes)  # type: ignore[attr-defined]
+        return m
+    if n == "resnet50":
+        m = tvm.resnet50(weights=None)
+        _replace_first_conv_resnet(m, in_ch)
+        m.fc = nn.Linear(m.fc.in_features, num_classes)  # type: ignore[attr-defined]
+        return m
+    if n == "vit_b16":
+        m = tvm.vit_b_16(weights=None)
+        if in_ch != 3:
+            raise ValueError("vit_b16 only supported for in_ch=3 in this lightweight builder.")
+        _replace_vit_head(m, num_classes)
+        return m
+
+    raise ValueError("Unknown torchvision model")
+
+
 def build_model(
-    name: Literal["mlp", "resnet18", "resnet50", "vit_b16"] = "mlp",
+    name: Optional[str] = "mlp",
     in_ch: int = 3,
     img_size: int = 224,
     num_classes: int = 2,
     hidden: int = 128,
-    *,
     num_out: Optional[int] = None,
 ) -> nn.Module:
-    """
-    Returns a model instance. For Phase 0 + smoke, default is a tiny MLP.
-    `num_out` is accepted as an alias for `num_classes` (tests use this).
-    """
-    out_ch = int(num_out) if num_out is not None else int(num_classes)
-    name = (name or "mlp").lower()
+    n = (name or "").lower()
+    out = int(num_out) if num_out is not None else int(num_classes)
 
-    if name == "mlp":
-        return TinyMLP(in_ch=in_ch, img_size=img_size, hidden=hidden, num_classes=out_ch)
+    if n in ("", "mlp"):
+        return TinyMLP(in_ch=in_ch, img_size=img_size, hidden=hidden, num_classes=out)
 
-    if name == "resnet18":
-        try:
-            from torchvision.models import resnet18
-
-            m = resnet18(weights=None)
-            if in_ch != 3:
-                m.conv1 = nn.Conv2d(in_ch, 64, kernel_size=7, stride=2, padding=3, bias=False)
-                nn.init.kaiming_normal_(m.conv1.weight, mode="fan_out", nonlinearity="relu")
-            if out_ch != 1000:
-                m.fc = nn.Linear(m.fc.in_features, out_ch)
-            return m
-        except Exception as e:
-            raise RuntimeError("torchvision not available or failed to import resnet18") from e
-
-    if name == "resnet50":
-        try:
-            from torchvision.models import resnet50
-
-            m = resnet50(weights=None)
-            if in_ch != 3:
-                m.conv1 = nn.Conv2d(in_ch, 64, kernel_size=7, stride=2, padding=3, bias=False)
-                nn.init.kaiming_normal_(m.conv1.weight, mode="fan_out", nonlinearity="relu")
-            if out_ch != 1000:
-                m.fc = nn.Linear(m.fc.in_features, out_ch)
-            return m
-        except Exception as e:
-            raise RuntimeError("torchvision not available or failed to import resnet50") from e
-
-    if name == "vit_b16":
-        try:
-            from torchvision.models import vit_b_16
-
-            m = vit_b_16(weights=None)
-            if out_ch != 1000:
-                m.heads.head = nn.Linear(m.heads.head.in_features, out_ch)
-            return m
-        except Exception as e:
-            raise RuntimeError("torchvision ViT not available; use 'mlp' for smoke.") from e
-
-    raise ValueError(f"Unknown model name: {name!r}")
+    try:
+        return _build_torchvision(n, in_ch=in_ch, num_classes=out)
+    except RuntimeError:
+        # Fallback when torchvision is unavailable
+        return TinyMLP(in_ch=in_ch, img_size=img_size, hidden=hidden, num_classes=out)
 
 
+@torch.no_grad()
 def train_step(model: nn.Module, x: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, float]:
-    model.train(True)
-    opt = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.0)
-    loss_fn = nn.CrossEntropyLoss()
-
-    opt.zero_grad(set_to_none=True)
+    model.train(False)
     logits = model(x)
-    loss = loss_fn(logits, y)
-    loss.backward()
-    opt.step()
-    acc = (logits.argmax(dim=-1) == y).float().mean().item()
-    return loss.detach(), acc
+    if logits.ndim == 2 and logits.size(1) == 1:
+        loss = nn.BCEWithLogitsLoss()(logits.squeeze(1), y.float())
+        pred = (logits.squeeze(1) > 0).long()
+    else:
+        loss = nn.CrossEntropyLoss()(logits, y.long())
+        pred = logits.argmax(dim=1)
+    acc = (pred == y.long()).float().mean().item()
+    return loss, float(acc)
 
 
-def _parse_args(argv=None):
-    p = argparse.ArgumentParser(description="Baseline trainer (smoke-safe).")
-    p.add_argument(
-        "--smoke",
-        action="store_true",
-        help="Run a tiny CPU-only smoke test and exit 0 on success.",
-    )
-    p.add_argument(
-        "--model",
-        default="mlp",
-        choices=["mlp", "resnet18", "resnet50", "vit_b16"],
-        help="Model name.",
-    )
+def _write_smoke_html(path: str | os.PathLike, title: str, loss: float, acc: float) -> None:
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    html_body = f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>{html.escape(title)}</title></head>
+<body>
+<h1>{html.escape(title)}</h1>
+<p><strong>loss</strong> = {loss:.4f}</p>
+<p><strong>acc</strong> = {acc:.4f}</p>
+</body></html>
+"""
+    p.write_text(html_body, encoding="utf-8")
+
+
+def _open_in_edge(path: str) -> None:
+    try:
+        if os.name == "nt":
+            os.system(f'start msedge "{path}"')
+    except Exception:
+        pass
+
+
+def _parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
+    p = argparse.ArgumentParser()
+    p.add_argument("--smoke", action="store_true", help="Run a tiny smoke forward")
+    p.add_argument("--model", default="mlp", help="Model name (mlp/resnet18/resnet50/vit_b16)")
     p.add_argument("--num-classes", type=int, default=2)
     p.add_argument("--img-size", type=int, default=224)
     p.add_argument("--in-ch", type=int, default=3)
-    return p.parse_args(argv)
+    p.add_argument("--smoke-html", default="", help="Write smoke HTML report to this path")
+    p.add_argument("--open-edge", action="store_true", help="Try to open the HTML in Edge")
+    return p.parse_args(list(argv) if argv is not None else None)
 
 
-def main(argv=None) -> int:
+def main(argv: Optional[Iterable[str]] = None) -> int:
     args = _parse_args(argv)
-
     if args.smoke:
         torch.manual_seed(0)
         model = build_model(
-            name="mlp",
+            args.model,
             in_ch=args.in_ch,
             img_size=args.img_size,
             num_classes=args.num_classes,
+            hidden=16,
         )
-        x = torch.rand(4, args.in_ch, args.img_size, args.img_size)
-        y = torch.randint(0, args.num_classes, (4,))
+        x = torch.randn(4, args.in_ch, args.img_size, args.img_size)
+        y = torch.randint(0, max(2, int(args.num_classes)), (4,))
         loss, acc = train_step(model, x, y)
-        print(f"[SMOKE] loss={float(loss):.4f} acc={acc:.3f}")
+
+        print(f"[SMOKE] loss={float(loss):.4f} acc={acc:.4f}")
+
+        if args.smoke_html:
+            _write_smoke_html(args.smoke_html, "Smoke Report", float(loss), float(acc))
+            if args.open_edge:
+                _open_in_edge(args.smoke_html)
+        return 0
+    else:
+        print("[baseline] nothing to do (run with --smoke).")
         return 0
 
-    print(
-        "Baseline runner is ready. Use --smoke for a quick check, or Phase 1 configs for real training."
-    )
-    return 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

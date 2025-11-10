@@ -1,3 +1,6 @@
+"""
+Robust sweep evaluation script with support for multiple architectures.
+"""
 import argparse
 import csv
 import hashlib
@@ -59,15 +62,47 @@ def _assert_ckpt_ok(path: str, min_bytes: int = 4096):
 
 
 def load_model(name: str, ckpt: str, device: torch.device) -> nn.Module:
+    """
+    Load a model with checkpoint weights.
+    
+    Supports: resnet18, resnet34, resnet50, resnet101, resnet152,
+              densenet121, densenet169, densenet201
+    """
     name = (name or "resnet18").lower()
-    if name != "resnet18":
-        raise ValueError(f"Only resnet18 supported here (got {name})")
-
+    
     # Preflight validation (existence + min size)
     _assert_ckpt_ok(ckpt)
-
-    m = tv_models.resnet18(weights=None)
-    m.fc = nn.Linear(m.fc.in_features, 1)
+    
+    # Build architecture
+    if name == "resnet18":
+        m = tv_models.resnet18(weights=None)
+        m.fc = nn.Linear(m.fc.in_features, 1)
+    elif name == "resnet34":
+        m = tv_models.resnet34(weights=None)
+        m.fc = nn.Linear(m.fc.in_features, 1)
+    elif name == "resnet50":
+        m = tv_models.resnet50(weights=None)
+        m.fc = nn.Linear(m.fc.in_features, 1)
+    elif name == "resnet101":
+        m = tv_models.resnet101(weights=None)
+        m.fc = nn.Linear(m.fc.in_features, 1)
+    elif name == "resnet152":
+        m = tv_models.resnet152(weights=None)
+        m.fc = nn.Linear(m.fc.in_features, 1)
+    elif name == "densenet121":
+        m = tv_models.densenet121(weights=None)
+        m.classifier = nn.Linear(m.classifier.in_features, 1)
+    elif name == "densenet169":
+        m = tv_models.densenet169(weights=None)
+        m.classifier = nn.Linear(m.classifier.in_features, 1)
+    elif name == "densenet201":
+        m = tv_models.densenet201(weights=None)
+        m.classifier = nn.Linear(m.classifier.in_features, 1)
+    else:
+        raise ValueError(
+            f"Unsupported architecture: {name}. "
+            f"Supported: resnet18/34/50/101/152, densenet121/169/201"
+        )
 
     # Load the checkpoint robustly with clearer errors for corrupt zip
     try:
