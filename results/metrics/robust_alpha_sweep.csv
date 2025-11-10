@@ -1,4 +1,0 @@
-attack,eps_255,steps,alpha_255,AUC_clean,AUC_adv,AUC_drop
-PGD20_a1,8,20,1,1.0,0.5,0.5
-PGD20_a2,8,20,2,1.0,0.5,0.5
-PGD20_a3,8,20,3,1.0,0.5,0.5

@@ -1,2 +1,0 @@
-attack,eps_255,steps,AUC_clean,AUC_adv,AUC_drop
-FGSM_0,0,0,1.0,0.75,0.25
